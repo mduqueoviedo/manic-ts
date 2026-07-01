@@ -27,12 +27,12 @@ export class Player {
     this.x += this.vx * dt
     this.y += this.vy * dt
 
-    // simple ground collision
+    // Simple ground collision
     const groundY = 128 - this.height
     if (this.y > groundY) { this.y = groundY; this.vy = 0; this.onGround = true }
   }
 
-  render(ctx: CanvasRenderingContext2D){
+  render(ctx: CanvasRenderingContext2D) {
     ctx.fillStyle = '#fff'
     ctx.fillRect(Math.round(this.x), Math.round(this.y), this.width, this.height)
   }
