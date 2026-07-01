@@ -49,6 +49,17 @@ describe('Player', () => {
     expect(p.onGround).toBe(false)
   })
 
+  it('keeps the jump trajectory fixed after takeoff', () => {
+    const p = new Player()
+    p.onGround = true
+    p.update(1 / 60, { left: true, right: false, jumpPressed: true })
+    expect(p.vx).toBeLessThan(0)
+
+    p.update(1 / 60, { left: false, right: true, jumpPressed: false })
+    expect(p.vx).toBeLessThan(0)
+    expect(p.vy).toBeLessThan(0)
+  })
+
   it('marks the player as grounded when landing exactly on the floor', () => {
     const p = new Player()
     p.onGround = false

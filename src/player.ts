@@ -9,6 +9,7 @@ export class Player {
   height = 16
   onGround = true
   jumpDirection = 0
+  jumpLocked = false
 
   update(dt: number, input: { left: boolean; right: boolean; jumpPressed: boolean }) {
     const speed = 60
@@ -16,26 +17,33 @@ export class Player {
     const jumpSpeedY = -150
     const jumpSpeedX = 60
 
-    if (input.left) {
-      this.vx = -speed
-      this.jumpDirection = -1
-    } else if (input.right) {
-      this.vx = speed
-      this.jumpDirection = 1
-    } else {
-      this.vx = 0
-      this.jumpDirection = 0
+    if (!this.jumpLocked) {
+      if (input.left) {
+        this.vx = -speed
+        this.jumpDirection = -1
+      } else if (input.right) {
+        this.vx = speed
+        this.jumpDirection = 1
+      } else {
+        this.vx = 0
+        this.jumpDirection = 0
+      }
     }
 
-    if (input.jumpPressed && this.onGround) {
+    if (input.jumpPressed && this.onGround && !this.jumpLocked) {
       this.vy = jumpSpeedY
       this.vx = this.jumpDirection * jumpSpeedX
       this.onGround = false
+      this.jumpLocked = true
     }
 
-    this.vy += gravity * dt
-    this.x += this.vx * dt
-    this.y += this.vy * dt
+    if (!this.onGround) {
+      this.vy += gravity * dt
+      this.x += this.vx * dt
+      this.y += this.vy * dt
+    } else {
+      this.x += this.vx * dt
+    }
 
     this.clampToBounds()
 
@@ -45,6 +53,7 @@ export class Player {
       this.y = groundY
       this.vy = 0
       this.onGround = true
+      this.jumpLocked = false
     }
   }
 
