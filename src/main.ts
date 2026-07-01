@@ -1,6 +1,7 @@
 import './styles.css'
-import { testMap, TILE_SIZE, WIDTH, HEIGHT } from './map'
+import { testLevel, WIDTH, HEIGHT } from './map'
 import { Player } from './player'
+import { SpectrumPalette } from './palette'
 
 const SCALE = 4
 
@@ -8,7 +9,7 @@ class Game {
   canvas: HTMLCanvasElement
   ctx: CanvasRenderingContext2D
   player: Player
-  keys = { left: false, right: false, jump: false }
+  keys = { left: false, right: false, jumpPressed: false, jumpHeld: false }
 
   lastTime = 0
   accumulator = 0
@@ -34,12 +35,21 @@ class Game {
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft') this.keys.left = true
       if (e.key === 'ArrowRight') this.keys.right = true
-      if (e.key === ' ' || e.key === 'ArrowUp') this.keys.jump = true
+      if (e.key === ' ' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        if (!e.repeat) {
+          this.keys.jumpPressed = true
+        }
+        this.keys.jumpHeld = true
+      }
     })
     window.addEventListener('keyup', (e) => {
       if (e.key === 'ArrowLeft') this.keys.left = false
       if (e.key === 'ArrowRight') this.keys.right = false
-      if (e.key === ' ' || e.key === 'ArrowUp') this.keys.jump = false
+      if (e.key === ' ' || e.key === 'ArrowUp') {
+        this.keys.jumpHeld = false
+        this.keys.jumpPressed = false
+      }
     })
   }
 
@@ -63,24 +73,23 @@ class Game {
   }
 
   update(dt: number){
-    this.player.update(dt, this.keys)
+    this.player.update(dt, this.keys, testLevel.platforms)
+    this.keys.jumpPressed = false
   }
 
   render(){
-    this.ctx.clearRect(0,0,WIDTH,HEIGHT)
-    // Render the simple background
-    this.ctx.fillStyle = '#012'
-    this.ctx.fillRect(0,0,WIDTH,HEIGHT)
+    // Spectrum-inspired background (deep blue)
+    this.ctx.fillStyle = SpectrumPalette.blue
+    this.ctx.fillRect(0, 0, WIDTH, HEIGHT)
 
-    // Render the test map (floor)
-    this.ctx.fillStyle = '#444'
-    for(let y=0;y<testMap.length;y++){
-      for(let x=0;x<testMap[y].length;x++){
-        if (testMap[y][x] === 1) this.ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
-      }
+    // Render platforms
+    for (const platform of testLevel.platforms) {
+      this.ctx.fillStyle = SpectrumPalette.cyan
+      this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height)
     }
 
-    this.player.render(this.ctx)
+    // Render player (red)
+    this.player.render(this.ctx, SpectrumPalette.red)
   }
 }
 

@@ -4,8 +4,32 @@ export const HEIGHT = 128
 export const TILES_X = WIDTH / TILE_SIZE
 export const TILES_Y = HEIGHT / TILE_SIZE
 
-// Simple test map: floor at the bottom
-export const testMap: number[][] = Array.from({ length: TILES_Y }, (_, y) => {
-  if (y === TILES_Y - 1) return Array.from({ length: TILES_X }, () => 1)
-  return Array.from({ length: TILES_X }, () => 0)
-})
+export interface Platform {
+  x: number
+  y: number
+  width: number
+  height: number
+  solid: boolean
+}
+
+export interface Level {
+  platforms: Platform[]
+}
+
+// Test level with multiple platforms
+export const testLevel: Level = {
+  platforms: [
+    // Floor
+    { x: 0, y: HEIGHT - 8, width: WIDTH, height: 8, solid: true },
+    // Left platform
+    { x: 0, y: 96, width: 80, height: 8, solid: true },
+    // Middle platform
+    { x: 88, y: 80, width: 80, height: 8, solid: true },
+    // Right platform
+    { x: 176, y: 96, width: 80, height: 8, solid: true },
+    // Upper left platform
+    { x: 16, y: 48, width: 64, height: 8, solid: true },
+    // Upper right platform
+    { x: 176, y: 48, width: 64, height: 8, solid: true },
+  ],
+}
