@@ -10,7 +10,7 @@ export class Player {
   onGround = true
   jumpDirection = 0
 
-  update(dt: number, input: { left: boolean; right: boolean; jump: boolean }) {
+  update(dt: number, input: { left: boolean; right: boolean; jumpPressed: boolean }) {
     const speed = 60
     const gravity = 400
     const jumpSpeedY = -150
@@ -27,7 +27,7 @@ export class Player {
       this.jumpDirection = 0
     }
 
-    if (input.jump && this.onGround) {
+    if (input.jumpPressed && this.onGround) {
       this.vy = jumpSpeedY
       this.vx = this.jumpDirection * jumpSpeedX
       this.onGround = false
@@ -41,7 +41,7 @@ export class Player {
 
     // Simple ground collision
     const groundY = HEIGHT - this.height
-    if (this.y > groundY) {
+    if (this.y >= groundY) {
       this.y = groundY
       this.vy = 0
       this.onGround = true
