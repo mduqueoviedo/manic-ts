@@ -3,6 +3,13 @@ import { WIDTH } from './map'
 import { Player } from './player'
 
 describe('Player', () => {
+  it('starts on the ground and can jump immediately', () => {
+    const p = new Player()
+    expect(p.onGround).toBe(true)
+    p.update(1 / 60, { left: false, right: false, jump: true })
+    expect(p.vy).toBeLessThan(0)
+  })
+
   it('jumps when on ground and jump input true', () => {
     const p = new Player()
     p.onGround = true

@@ -2,12 +2,12 @@ import { HEIGHT, WIDTH } from './map'
 
 export class Player {
   x = 32
-  y = 64
+  y = 112
   vx = 0
   vy = 0
   width = 8
   height = 16
-  onGround = false
+  onGround = true
   jumpDirection = 0
 
   update(dt: number, input: { left: boolean; right: boolean; jump: boolean }) {
