@@ -1,0 +1,8 @@
+:root{
+  --scale: 4;
+}
+html,body{height:100%;margin:0}
+body{display:flex;align-items:center;justify-content:center;background:#0b0b12;color:#fff;font-family:system-ui,Segoe UI,Roboto}
+#app{display:flex;align-items:center;justify-content:center}
+canvas{image-rendering:pixelated; image-rendering:-moz-crisp-edges; image-rendering:crisp-edges; background:#001; border:6px solid #111}
+#game-canvas{width:calc(256px * var(--scale)); height:calc(128px * var(--scale));}
