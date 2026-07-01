@@ -68,11 +68,11 @@ class Game {
 
   render(){
     this.ctx.clearRect(0,0,WIDTH,HEIGHT)
-    // render simple background
+    // Render the simple background
     this.ctx.fillStyle = '#012'
     this.ctx.fillRect(0,0,WIDTH,HEIGHT)
 
-    // render test map (floor)
+    // Render the test map (floor)
     this.ctx.fillStyle = '#444'
     for(let y=0;y<testMap.length;y++){
       for(let x=0;x<testMap[y].length;x++){

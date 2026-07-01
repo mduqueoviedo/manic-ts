@@ -1,21 +1,21 @@
 # Manic Miner - TypeScript + Vite (Canvas)
 
-Proyecto experimental para recrear la lógica de *Manic Miner* usando HTML5 Canvas y TypeScript.
+Experimental project to recreate the core logic of *Manic Miner* using HTML5 Canvas and TypeScript.
 
-Quick start
+## Quick start
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Tests (setup básico con Vitest):
+## Tests
 
 ```bash
 pnpm test
 ```
 
-Archivos clave
+## Key files
 
 - [index.html](index.html)
 - [src/main.ts](src/main.ts)
