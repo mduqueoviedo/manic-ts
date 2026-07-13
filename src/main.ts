@@ -1,97 +1,56 @@
-import './styles.css'
-import { testLevel, WIDTH, HEIGHT } from './map'
-import { Player } from './player'
-import { SpectrumPalette } from './palette'
+import { TileMap } from './world/TileMap';
+import { InputHandler } from './core/InputHandler';
+import { MinerWilly } from './entities/MinerWilly';
 
-const SCALE = 4
+const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
+const ctx = canvas.getContext('2d')!;
 
-class Game {
-  canvas: HTMLCanvasElement
-  ctx: CanvasRenderingContext2D
-  player: Player
-  keys = { left: false, right: false, jumpPressed: false, jumpHeld: false }
+canvas.width = 320;
+canvas.height = 200;
 
-  lastTime = 0
-  accumulator = 0
-  readonly step = 1000 / 60
+const TARGET_FPS = 25;
+const FRAME_TIME = 1000 / TARGET_FPS;
+let lastTime = 0;
+let accumulatedTime = 0;
 
-  constructor(){
-    const c = document.getElementById('game-canvas') as HTMLCanvasElement
-    if (!c) throw new Error('Canvas not found')
-    this.canvas = c
-    this.canvas.width = WIDTH
-    this.canvas.height = HEIGHT
-    const ctx = this.canvas.getContext('2d')
-    if (!ctx) throw new Error('2D Context not available')
-    this.ctx = ctx
-    this.ctx.imageSmoothingEnabled = false
+const tileMap = new TileMap();
+const input = new InputHandler();
 
-    this.player = new Player()
+// Create Willy at a temporary ground level position (y: 104 aligns with the green floor)
+const willy = new MinerWilly(50, 104);
 
-    this.setupInput()
-  }
-
-  setupInput(){
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') this.keys.left = true
-      if (e.key === 'ArrowRight') this.keys.right = true
-      if (e.key === ' ' || e.key === 'ArrowUp') {
-        e.preventDefault()
-        if (!e.repeat) {
-          this.keys.jumpPressed = true
-        }
-        this.keys.jumpHeld = true
-      }
-    })
-    window.addEventListener('keyup', (e) => {
-      if (e.key === 'ArrowLeft') this.keys.left = false
-      if (e.key === 'ArrowRight') this.keys.right = false
-      if (e.key === ' ' || e.key === 'ArrowUp') {
-        this.keys.jumpHeld = false
-        this.keys.jumpPressed = false
-      }
-    })
-  }
-
-  start(){
-    requestAnimationFrame(this.loop.bind(this))
-  }
-
-  loop(time: number){
-    if (!this.lastTime) this.lastTime = time
-    const delta = time - this.lastTime
-    this.lastTime = time
-    this.accumulator += delta
-
-    while(this.accumulator >= this.step){
-      this.update(this.step / 1000)
-      this.accumulator -= this.step
-    }
-
-    this.render()
-    requestAnimationFrame(this.loop.bind(this))
-  }
-
-  update(dt: number){
-    this.player.update(dt, this.keys, testLevel.platforms)
-    this.keys.jumpPressed = false
-  }
-
-  render(){
-    // Spectrum-inspired background (deep blue)
-    this.ctx.fillStyle = SpectrumPalette.blue
-    this.ctx.fillRect(0, 0, WIDTH, HEIGHT)
-
-    // Render platforms
-    for (const platform of testLevel.platforms) {
-      this.ctx.fillStyle = SpectrumPalette.cyan
-      this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height)
-    }
-
-    // Render player (red)
-    this.player.render(this.ctx, SpectrumPalette.red)
-  }
+/**
+ * Updates the game simulation.
+ */
+function update(): void {
+  willy.update(input);
 }
 
-const game = new Game()
-game.start()
+/**
+ * Renders all game visual modules.
+ */
+function render(): void {
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  tileMap.render(ctx);
+  willy.render(ctx);
+}
+
+function gameLoop(currentTime: number): void {
+  if (!lastTime) lastTime = currentTime;
+  
+  const deltaTime = currentTime - lastTime;
+  lastTime = currentTime;
+  accumulatedTime += deltaTime;
+
+  while (accumulatedTime >= FRAME_TIME) {
+    update();
+    accumulatedTime -= FRAME_TIME;
+  }
+
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
