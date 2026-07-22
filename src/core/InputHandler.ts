@@ -13,7 +13,7 @@ export class InputHandler {
   private listenToEvents(): void {
     window.addEventListener('keydown', (event: KeyboardEvent) => {
       // Prevent browser scrolling behavior when pressing space or arrow keys
-      if (['Space', 'ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD'].includes(event.code)) {
+      if (['Space', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD'].includes(event.code)) {
         event.preventDefault();
       }
       this.keys[event.code] = true;
@@ -42,6 +42,6 @@ export class InputHandler {
    * Returns true if the user is triggering a jump action.
    */
   public get isJumpPressed(): boolean {
-    return this.keys['Space'] === true;
+    return this.keys['Space'] === true || this.keys['ArrowUp'] === true;
   }
 }

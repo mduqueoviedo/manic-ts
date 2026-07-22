@@ -1,4 +1,5 @@
 import { InputHandler } from '../core/InputHandler';
+import type { TileMap } from '../world/TileMap';
 
 export class MinerWilly {
     public x: number;
@@ -52,15 +53,21 @@ export class MinerWilly {
     /**
      * Updates Willy's position and state based on player input and mechanics.
      */
-    public update(input: InputHandler): void {
+    public update(input: InputHandler, tileMap: TileMap): void {
         if (this.isFalling) {
             this.handleFreeFall();
-        } else
-            if (!this.isJumping) {
-                this.handleGroundMovement(input);
-            } else {
-                this.handleAirMovement();
-            }
+            return;
+        }
+
+        if (this.isJumping) {
+            this.handleAirMovement();
+        } else {
+            this.handleGroundMovement(input);
+        }
+
+        if (!this.isJumping && !this.hasSolidSupport(tileMap)) {
+            this.isFalling = true;
+        }
     }
 
     /**
@@ -110,6 +117,20 @@ export class MinerWilly {
             this.isJumping = false;
             this.jumpDirection = 'NONE';
         }
+    }
+
+    /**
+     * Checks the map directly below both sides of Willy's collision body.
+     */
+    private hasSolidSupport(tileMap: TileMap): boolean {
+        const feetY = this.collisionY + MinerWilly.COLLISION_HEIGHT;
+        const leftFootTile = tileMap.getTileAtPixel(this.collisionX, feetY);
+        const rightFootTile = tileMap.getTileAtPixel(
+            this.collisionX + MinerWilly.COLLISION_WIDTH - 1,
+            feetY,
+        );
+
+        return tileMap.isSolidTile(leftFootTile) || tileMap.isSolidTile(rightFootTile);
     }
 
     /**

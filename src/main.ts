@@ -16,14 +16,14 @@ let accumulatedTime = 0;
 const tileMap = new TileMap();
 const input = new InputHandler();
 
-// Create Willy at a temporary ground level position (y: 104 aligns with the green floor)
-const willy = new MinerWilly(50, 104);
+// Start Willy on the solid test platform so its edges can be inspected.
+const willy = new MinerWilly(50, 80);
 
 /**
  * Updates the game simulation.
  */
 function update(): void {
-  willy.update(input);
+  willy.update(input, tileMap);
 }
 
 /**
