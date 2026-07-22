@@ -1,25 +1,62 @@
+import {
+  LEVEL_COLUMNS,
+  LEVEL_ROWS,
+  type LevelDefinition,
+} from '../levels/LevelDefinition';
+import { CANVAS_WIDTH } from '../core/GameConfig';
+
 // Define the type of tiles available in the cavern
 export const TILE_TYPES = {
   EMPTY: 0,
   SOLID: 1,       // Walls and floors that block movement from every direction
   COLLAPSIBLE: 2, // Floors that crumble when stepped on
   DEADLY: 3,      // Spikes or hazards
-  ONE_WAY: 4      // Platforms that only support Willy while he is descending
+  ONE_WAY: 4,     // Platforms that only support Willy while he is descending
+  CONVEYOR: 5,    // Floors that will move Willy horizontally
 } as const;
 
 export type TileType = typeof TILE_TYPES[keyof typeof TILE_TYPES];
 
+const TILE_BY_SYMBOL: Readonly<Record<string, TileType>> = {
+  ' ': TILE_TYPES.EMPTY,
+  '#': TILE_TYPES.SOLID,
+  '-': TILE_TYPES.ONE_WAY,
+  'x': TILE_TYPES.COLLAPSIBLE,
+  '!': TILE_TYPES.DEADLY,
+  '>': TILE_TYPES.CONVEYOR,
+};
+
+const TILE_COLORS: Readonly<Record<TileType, string>> = {
+  [TILE_TYPES.EMPTY]: '#000000',
+  [TILE_TYPES.SOLID]: '#00ff00',
+  [TILE_TYPES.ONE_WAY]: '#00ffff',
+  [TILE_TYPES.COLLAPSIBLE]: '#ffff00',
+  [TILE_TYPES.DEADLY]: '#ff0000',
+  [TILE_TYPES.CONVEYOR]: '#ff00ff',
+};
+
 export class TileMap {
   public static readonly TILE_SIZE = 8; // Each tile is 8x8 pixels
-  public static readonly COLUMNS = 40;  // 40 columns * 8px = 320px width
-  public static readonly ROWS = 16;     // 16 rows * 8px = 128px play area height
-  
-  // A simple matrix representing a basic test level structure
-  private grid: TileType[][];
+  public static readonly COLUMNS = LEVEL_COLUMNS;
+  public static readonly ROWS = LEVEL_ROWS;
+  public static readonly WIDTH = TileMap.COLUMNS * TileMap.TILE_SIZE;
+  public static readonly ORIGIN_X = (CANVAS_WIDTH - TileMap.WIDTH) / 2;
+  public static readonly ORIGIN_Y = 0;
+  public static readonly RIGHT = TileMap.ORIGIN_X + TileMap.WIDTH;
 
-  constructor() {
-    this.grid = this.createEmptyGrid();
-    this.buildTestLevel();
+  private static readonly THIN_TILE_HEIGHT = TileMap.TILE_SIZE / 2;
+  private static readonly COLLECTIBLE_SIZE = TileMap.TILE_SIZE / 2;
+  private static readonly COLLECTIBLE_OFFSET =
+    (TileMap.TILE_SIZE - TileMap.COLLECTIBLE_SIZE) / 2;
+  private static readonly EXIT_SIZE_IN_TILES = 2;
+  private static readonly EXIT_SIZE =
+    TileMap.TILE_SIZE * TileMap.EXIT_SIZE_IN_TILES;
+  private static readonly STROKE_ALIGNMENT_OFFSET = 0.5;
+
+  private readonly grid: TileType[][];
+
+  constructor(private readonly level: LevelDefinition) {
+    this.grid = this.createGrid(level.tiles);
   }
 
   /**
@@ -44,8 +81,8 @@ export class TileMap {
    * Returns the tile containing a pixel, or undefined when outside the cavern.
    */
   public getTileAtPixel(x: number, y: number): TileType | undefined {
-    const column = Math.floor(x / TileMap.TILE_SIZE);
-    const row = Math.floor(y / TileMap.TILE_SIZE);
+    const column = Math.floor((x - TileMap.ORIGIN_X) / TileMap.TILE_SIZE);
+    const row = Math.floor((y - TileMap.ORIGIN_Y) / TileMap.TILE_SIZE);
 
     return this.getTileAtGrid(column, row);
   }
@@ -58,39 +95,82 @@ export class TileMap {
   }
 
   /**
-   * Initializes a completely empty grid filled with zeros.
+   * Identifies floor-like tiles that support Willy from above.
    */
-  private createEmptyGrid(): TileType[][] {
-    return Array.from({ length: TileMap.ROWS }, () => 
-      Array(TileMap.COLUMNS).fill(TILE_TYPES.EMPTY)
-    );
+  public isSupportTile(tile: TileType | undefined): boolean {
+    return tile === TILE_TYPES.SOLID
+      || tile === TILE_TYPES.ONE_WAY
+      || tile === TILE_TYPES.COLLAPSIBLE
+      || tile === TILE_TYPES.CONVEYOR;
   }
 
-  /**
-   * Fills the matrix with a temporary layout to test rendering.
-   */
-  private buildTestLevel(): void {
-    // Create a solid ground floor at the bottom row
-    for (let col = 0; col < TileMap.COLUMNS; col++) {
-      this.grid[TileMap.ROWS - 1][col] = TILE_TYPES.SOLID;
+  private createGrid(rows: readonly string[]): TileType[][] {
+    if (rows.length !== TileMap.ROWS) {
+      throw new Error(
+        `Level "${this.level.name}" must have ${TileMap.ROWS} tile rows.`,
+      );
     }
 
-    // Add three evenly sized platforms at different heights
-    for (let col = 4; col <= 9; col++) {
-      this.grid[9][col] = TILE_TYPES.SOLID;
+    return rows.map((row, rowIndex) => {
+      if (row.length !== TileMap.COLUMNS) {
+        throw new Error(
+          `Row ${rowIndex} of level "${this.level.name}" must have ${TileMap.COLUMNS} tiles.`,
+        );
+      }
+
+      return [...row].map((symbol, column) => {
+        const tile = TILE_BY_SYMBOL[symbol];
+
+        if (tile === undefined) {
+          throw new Error(
+            `Unknown tile symbol "${symbol}" at ${column},${rowIndex} in level "${this.level.name}".`,
+          );
+        }
+
+        return tile;
+      });
+    });
+  }
+
+  private renderObjects(ctx: CanvasRenderingContext2D): void {
+    for (const object of this.level.objects) {
+      const x = TileMap.ORIGIN_X + object.column * TileMap.TILE_SIZE;
+      const y = TileMap.ORIGIN_Y + object.row * TileMap.TILE_SIZE;
+
+      if (object.type === 'COLLECTIBLE') {
+        // Temporary visual marker until collectible sprites and behavior exist.
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(
+          x + TileMap.COLLECTIBLE_OFFSET,
+          y + TileMap.COLLECTIBLE_OFFSET,
+          TileMap.COLLECTIBLE_SIZE,
+          TileMap.COLLECTIBLE_SIZE,
+        );
+      } else if (object.type === 'EXIT') {
+        // Portals occupy a 16x16 cell in the original level data.
+        ctx.fillStyle = '#0000ff';
+        ctx.fillRect(x, y, TileMap.EXIT_SIZE, TileMap.EXIT_SIZE);
+        ctx.strokeStyle = '#ffffff';
+        ctx.strokeRect(
+          x + TileMap.STROKE_ALIGNMENT_OFFSET,
+          y + TileMap.STROKE_ALIGNMENT_OFFSET,
+          TileMap.EXIT_SIZE - TileMap.STROKE_ALIGNMENT_OFFSET * 2,
+          TileMap.EXIT_SIZE - TileMap.STROKE_ALIGNMENT_OFFSET * 2,
+        );
+      }
+    }
+  }
+
+  private getTileHeight(tile: TileType, row: number): number {
+    if (row === TileMap.ROWS - 1) {
+      return TileMap.TILE_SIZE;
     }
 
-    for (let col = 14; col <= 19; col++) {
-      this.grid[11][col] = TILE_TYPES.ONE_WAY;
-    }
-
-    for (let col = 24; col <= 29; col++) {
-      this.grid[13][col] = TILE_TYPES.COLLAPSIBLE;
-    }
-
-    // Add a couple of deadly spike tiles
-    this.grid[14][15] = TILE_TYPES.DEADLY;
-    this.grid[14][16] = TILE_TYPES.DEADLY;
+    return tile === TILE_TYPES.ONE_WAY
+      || tile === TILE_TYPES.COLLAPSIBLE
+      || tile === TILE_TYPES.CONVEYOR
+      ? TileMap.THIN_TILE_HEIGHT
+      : TileMap.TILE_SIZE;
   }
 
   /**
@@ -105,23 +185,16 @@ export class TileMap {
 
         if (tile === TILE_TYPES.EMPTY) continue;
 
-        // Assign sharp, distinct colors depending on the tile behavior
-        if (tile === TILE_TYPES.SOLID) {
-          ctx.fillStyle = '#00ff00'; // Bright green for solid ground
-        } else if (tile === TILE_TYPES.ONE_WAY) {
-          ctx.fillStyle = '#00ffff'; // Cyan for one-way platforms
-        } else if (tile === TILE_TYPES.COLLAPSIBLE) {
-          ctx.fillStyle = '#ffff00'; // Yellow for collapsible floors
-        } else if (tile === TILE_TYPES.DEADLY) {
-          ctx.fillStyle = '#ff0000'; // Bright red for spikes
-        }
-
-        // Floor-like tiles use a thinner placeholder graphic inside their 8x8 cell.
-        const tileHeight = tile === TILE_TYPES.ONE_WAY || tile === TILE_TYPES.COLLAPSIBLE
-          ? size / 2
-          : size;
-        ctx.fillRect(col * size, row * size, size, tileHeight);
+        ctx.fillStyle = TILE_COLORS[tile];
+        ctx.fillRect(
+          TileMap.ORIGIN_X + col * size,
+          TileMap.ORIGIN_Y + row * size,
+          size,
+          this.getTileHeight(tile, row),
+        );
       }
     }
+
+    this.renderObjects(ctx);
   }
 }
