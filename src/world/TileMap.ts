@@ -75,21 +75,18 @@ export class TileMap {
       this.grid[TileMap.ROWS - 1][col] = TILE_TYPES.SOLID;
     }
 
-    // Add a fully solid platform
-    this.grid[12][5] = TILE_TYPES.SOLID;
-    this.grid[12][6] = TILE_TYPES.SOLID;
-    this.grid[12][7] = TILE_TYPES.SOLID;
+    // Add three evenly sized platforms at different heights
+    for (let col = 4; col <= 9; col++) {
+      this.grid[9][col] = TILE_TYPES.SOLID;
+    }
 
-    // Add a one-way platform
-    this.grid[10][18] = TILE_TYPES.ONE_WAY;
-    this.grid[10][19] = TILE_TYPES.ONE_WAY;
-    this.grid[10][20] = TILE_TYPES.ONE_WAY;
-    this.grid[10][21] = TILE_TYPES.ONE_WAY;
+    for (let col = 14; col <= 19; col++) {
+      this.grid[11][col] = TILE_TYPES.ONE_WAY;
+    }
 
-    // Add a collapsible platform
-    this.grid[12][27] = TILE_TYPES.COLLAPSIBLE;
-    this.grid[12][28] = TILE_TYPES.COLLAPSIBLE;
-    this.grid[12][29] = TILE_TYPES.COLLAPSIBLE;
+    for (let col = 24; col <= 29; col++) {
+      this.grid[13][col] = TILE_TYPES.COLLAPSIBLE;
+    }
 
     // Add a couple of deadly spike tiles
     this.grid[14][15] = TILE_TYPES.DEADLY;
@@ -119,8 +116,11 @@ export class TileMap {
           ctx.fillStyle = '#ff0000'; // Bright red for spikes
         }
 
-        // Draw the specific 8x8 pixel tile block
-        ctx.fillRect(col * size, row * size, size, size);
+        // Floor-like tiles use a thinner placeholder graphic inside their 8x8 cell.
+        const tileHeight = tile === TILE_TYPES.ONE_WAY || tile === TILE_TYPES.COLLAPSIBLE
+          ? size / 2
+          : size;
+        ctx.fillRect(col * size, row * size, size, tileHeight);
       }
     }
   }
