@@ -17,7 +17,7 @@ const tileMap = new TileMap();
 const input = new InputHandler();
 
 // Start Willy on the solid test platform so its edges can be inspected.
-const willy = new MinerWilly(50, 80);
+const willy = new MinerWilly(50, 56);
 
 /**
  * Updates the game simulation.

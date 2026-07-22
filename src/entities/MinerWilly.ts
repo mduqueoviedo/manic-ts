@@ -1,5 +1,5 @@
 import { InputHandler } from '../core/InputHandler';
-import type { TileMap } from '../world/TileMap';
+import { TileMap } from '../world/TileMap';
 
 export class MinerWilly {
     public x: number;
@@ -41,6 +41,8 @@ export class MinerWilly {
         2, 2, 2, 2, 2, 2,
         3, 3, 3,
     ];
+    private static readonly JUMP_DESCENT_START_FRAME =
+        MinerWilly.JUMP_OFFSET_TABLE.findIndex((offset) => offset > 0);
 
     // Fixed downward speed used after walking off a platform.
     private static readonly FALL_SPEED = 4;
@@ -55,12 +57,12 @@ export class MinerWilly {
      */
     public update(input: InputHandler, tileMap: TileMap): void {
         if (this.isFalling) {
-            this.handleFreeFall();
+            this.handleFreeFall(tileMap);
             return;
         }
 
         if (this.isJumping) {
-            this.handleAirMovement();
+            this.handleAirMovement(tileMap);
         } else {
             this.handleGroundMovement(input);
         }
@@ -99,7 +101,7 @@ export class MinerWilly {
     /**
      * Strict frame-by-frame arc processing for mid-air movement.
      */
-    private handleAirMovement(): void {
+    private handleAirMovement(tileMap: TileMap): void {
         // 1. Apply rigid horizontal direction locked at launch phase
         if (this.jumpDirection === 'LEFT') {
             this.x -= 2;
@@ -109,6 +111,16 @@ export class MinerWilly {
 
         // 2. Apply precise vertical adjustment from lookup matrix
         const verticalOffset = MinerWilly.JUMP_OFFSET_TABLE[this.jumpFrame];
+
+        if (verticalOffset < 0 && this.resolveCeilingCollision(tileMap, this.y + verticalOffset)) {
+            this.jumpFrame = MinerWilly.JUMP_DESCENT_START_FRAME;
+            return;
+        }
+
+        if (verticalOffset > 0 && this.tryLandOnSolid(tileMap, this.y + verticalOffset)) {
+            return;
+        }
+
         this.y += verticalOffset;
 
         // 3. Advance clock or terminate jump execution loop
@@ -124,27 +136,65 @@ export class MinerWilly {
      */
     private hasSolidSupport(tileMap: TileMap): boolean {
         const feetY = this.collisionY + MinerWilly.COLLISION_HEIGHT;
-        const leftFootTile = tileMap.getTileAtPixel(this.collisionX, feetY);
-        const rightFootTile = tileMap.getTileAtPixel(
-            this.collisionX + MinerWilly.COLLISION_WIDTH - 1,
-            feetY,
-        );
-
-        return tileMap.isSolidTile(leftFootTile) || tileMap.isSolidTile(rightFootTile);
+        return this.hasSolidAtHeight(tileMap, feetY);
     }
 
     /**
-     * Handles vertical downward movement when walking off a platform ledge.
+     * Stops upward movement when Willy's head enters a fully solid tile.
+     */
+    private resolveCeilingCollision(tileMap: TileMap, nextY: number): boolean {
+        if (!this.hasSolidAtHeight(tileMap, nextY)) {
+            return false;
+        }
+
+        const tileBottom = Math.floor(nextY / TileMap.TILE_SIZE) * TileMap.TILE_SIZE
+            + TileMap.TILE_SIZE;
+        this.y = tileBottom;
+        return true;
+    }
+
+    /**
+     * Lands Willy when his feet cross the top of a fully solid tile.
+     */
+    private tryLandOnSolid(tileMap: TileMap, nextY: number): boolean {
+        const previousFeetY = this.collisionY + MinerWilly.COLLISION_HEIGHT;
+        const nextFeetY = nextY + MinerWilly.COLLISION_HEIGHT;
+        const tileTop = Math.floor(nextFeetY / TileMap.TILE_SIZE) * TileMap.TILE_SIZE;
+
+        if (previousFeetY > tileTop || !this.hasSolidAtHeight(tileMap, nextFeetY)) {
+            return false;
+        }
+
+        this.y = tileTop - MinerWilly.COLLISION_HEIGHT;
+        this.isJumping = false;
+        this.isFalling = false;
+        this.jumpFrame = 0;
+        this.jumpDirection = 'NONE';
+        return true;
+    }
+
+    /**
+     * Checks both horizontal edges of Willy's collision body at a given height.
+     */
+    private hasSolidAtHeight(tileMap: TileMap, y: number): boolean {
+        const leftTile = tileMap.getTileAtPixel(this.collisionX, y);
+        const rightTile = tileMap.getTileAtPixel(
+            this.collisionX + MinerWilly.COLLISION_WIDTH - 1,
+            y,
+        );
+
+        return tileMap.isSolidTile(leftTile) || tileMap.isSolidTile(rightTile);
+    }
+
+    /**
+     * Handles vertical downward movement after a jump arc or leaving a ledge.
      * Horizontal input is completely ignored during this state.
      */
-    private handleFreeFall(): void {
-        this.y += MinerWilly.FALL_SPEED;
+    private handleFreeFall(tileMap: TileMap): void {
+        const nextY = this.y + MinerWilly.FALL_SPEED;
 
-        // Temporary safety net until we implement proper tile collisions:
-        // If Willy hits the baseline height where the green floor is, he lands.
-        if (this.y >= 104) {
-            this.y = 104;
-            this.isFalling = false;
+        if (!this.tryLandOnSolid(tileMap, nextY)) {
+            this.y = nextY;
         }
     }
 
