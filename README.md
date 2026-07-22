@@ -1,23 +1,7 @@
-# Manic Miner - TypeScript + Vite (Canvas)
+# Manic Miner
 
-Experimental project to recreate the core logic of *Manic Miner* using HTML5 Canvas and TypeScript.
+> Work in progress.
 
-## Quick start
-
-```bash
-pnpm install
-pnpm dev
-```
-
-## Tests
-
-```bash
-pnpm test
-```
-
-## Key files
-
-- [index.html](index.html)
-- [src/main.ts](src/main.ts)
-- [src/player.ts](src/player.ts)
-- [src/map.ts](src/map.ts)
+A web recreation of the Amstrad CPC version of *Manic Miner*. The project is
+currently in an early stage, with development focused on building the core game
+mechanics incrementally before creating the levels and polishing the visuals.
