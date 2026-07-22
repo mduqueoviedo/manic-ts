@@ -26,9 +26,13 @@
   * Remaining 9 frames: Downward vertical movement (falling).
   * There are no stationary frames at the apex: vertical movement changes
     directly from 1 pixel upward to 1 pixel downward.
-* **Mid-Air Collisions (Interruption):** If Willy hits a solid tile during a jump, his current momentum is canceled:
-  * **Ceiling Hit:** If his head touches a ceiling during the ascent phase, upward movement stops instantly, and he enters the falling phase immediately.
-  * **Wall Hit:** If his side touches a wall mid-parabola, horizontal movement drops to zero instantly. Willy will fall strictly vertically from that exact X coordinate.
+* **Mid-Air Collisions:** Solid tiles affect the two components of the jump differently:
+  * **Ceiling Hit:** If his head touches a ceiling during the ascent phase,
+    upward and horizontal movement stop instantly, and he enters the falling
+    phase immediately.
+  * **Side Wall:** A side collision suppresses only that tick's horizontal
+    step. The vertical arc and locked jump direction continue, allowing Willy
+    to resume horizontal movement if he rises above or falls below the wall.
 * **Fall Damage:** Falling from a height greater than 4 tiles (32 pixels) results in instant death.
 
 ## 4. Collision Rules
@@ -39,6 +43,10 @@
   platform between the previous and current game tick.
 * **Collapsible Tiles (Crumbling Floors):** When Willy stands on them, their visual state changes, and they disappear completely after a fixed number of frames, turning into 'EMPTY' space.
 * **Deadly Tiles:** Any intersection with spikes or environmental hazards triggers the death sequence immediately.
+* **Collectibles:** A collectible disappears when Willy's collision body
+  overlaps its 8x8 cell.
+* **Exit:** The exit remains locked until every collectible has been collected.
+  Entering the unlocked 16x16 exit marks the cavern as complete.
 
 ## 5. Timing and Frame Rate
 * **Game Speed:** The game logic advances at 12.5 ticks per second.

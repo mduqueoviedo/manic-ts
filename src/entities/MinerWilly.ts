@@ -40,6 +40,18 @@ export class MinerWilly {
         return this.collisionY + MinerWilly.COLLISION_HEIGHT - 1;
     }
 
+    public overlapsRectangle(
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+    ): boolean {
+        return this.collisionX < x + width
+            && this.collisionX + MinerWilly.COLLISION_WIDTH > x
+            && this.collisionY < y + height
+            && this.collisionY + MinerWilly.COLLISION_HEIGHT > y;
+    }
+
     // Jump tracking variables
     private isJumping: boolean = false;
     private isFalling: boolean = false;
@@ -56,9 +68,6 @@ export class MinerWilly {
         2, 2, 2, 2,
         3, 3, 4,
     ];
-    private static readonly JUMP_DESCENT_START_FRAME =
-        MinerWilly.JUMP_OFFSET_TABLE.findIndex((offset) => offset > 0);
-
     constructor(startX: number, startY: number) {
         this.x = startX;
         this.y = startY;
@@ -122,22 +131,14 @@ export class MinerWilly {
      * Strict frame-by-frame arc processing for mid-air movement.
      */
     private handleAirMovement(tileMap: TileMap): void {
-        // 1. Apply rigid horizontal direction locked at launch phase
-        if (this.jumpDirection === 'LEFT') {
-            if (this.moveHorizontally(tileMap, -MinerWilly.HORIZONTAL_SPEED)) {
-                this.jumpDirection = 'NONE';
-            }
-        } else if (this.jumpDirection === 'RIGHT') {
-            if (this.moveHorizontally(tileMap, MinerWilly.HORIZONTAL_SPEED)) {
-                this.jumpDirection = 'NONE';
-            }
-        }
-
-        // 2. Apply precise vertical adjustment from lookup matrix
+        // 1. Apply the vertical arc and resolve head or landing collisions.
         const verticalOffset = MinerWilly.JUMP_OFFSET_TABLE[this.jumpFrame];
 
         if (verticalOffset < 0 && this.resolveCeilingCollision(tileMap, this.y + verticalOffset)) {
-            this.jumpFrame = MinerWilly.JUMP_DESCENT_START_FRAME;
+            this.isJumping = false;
+            this.isFalling = true;
+            this.jumpFrame = MinerWilly.JUMP_START_FRAME;
+            this.jumpDirection = 'NONE';
             return;
         }
 
@@ -147,7 +148,14 @@ export class MinerWilly {
 
         this.y += verticalOffset;
 
-        // 3. Advance clock or terminate jump execution loop
+        // 2. Try the locked horizontal step from Willy's new vertical position.
+        if (this.jumpDirection === 'LEFT') {
+            this.moveHorizontally(tileMap, -MinerWilly.HORIZONTAL_SPEED);
+        } else if (this.jumpDirection === 'RIGHT') {
+            this.moveHorizontally(tileMap, MinerWilly.HORIZONTAL_SPEED);
+        }
+
+        // 3. Advance the jump clock or terminate the arc.
         this.jumpFrame++;
         if (this.jumpFrame >= MinerWilly.JUMP_OFFSET_TABLE.length) {
             this.isJumping = false;
@@ -215,10 +223,10 @@ export class MinerWilly {
     }
 
     /**
-     * Applies horizontal movement and stops at the near edge of solid tiles.
-     * Returns true when a collision interrupts the movement.
+     * Applies one horizontal step when Willy's path is clear. A blocked step
+     * does not discard the jump direction, so movement can resume later.
      */
-    private moveHorizontally(tileMap: TileMap, offset: number): boolean {
+    private moveHorizontally(tileMap: TileMap, offset: number): void {
         const nextX = this.x + offset;
         const nextCollisionX = nextX + MinerWilly.COLLISION_OFFSET_X;
         const leadingEdgeX = offset < 0
@@ -227,7 +235,7 @@ export class MinerWilly {
 
         if (!this.hasSolidAtVerticalEdge(tileMap, leadingEdgeX)) {
             this.x = nextX;
-            return false;
+            return;
         }
 
         const column = Math.floor(
@@ -240,8 +248,6 @@ export class MinerWilly {
             : tileLeft
                 - MinerWilly.COLLISION_WIDTH
                 - MinerWilly.COLLISION_OFFSET_X;
-
-        return true;
     }
 
     /**
@@ -278,10 +284,6 @@ export class MinerWilly {
 
         if (constrainedCollisionX !== currentCollisionX) {
             this.x = constrainedCollisionX - MinerWilly.COLLISION_OFFSET_X;
-
-            if (this.isJumping) {
-                this.jumpDirection = 'NONE';
-            }
         }
     }
 

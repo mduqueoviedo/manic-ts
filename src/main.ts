@@ -2,6 +2,7 @@ import { TileMap } from './world/TileMap';
 import { InputHandler } from './core/InputHandler';
 import { MinerWilly } from './entities/MinerWilly';
 import { centralCavern } from './levels/centralCavern';
+import { LevelState } from './world/LevelState';
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -22,6 +23,7 @@ let lastTime = 0;
 let accumulatedTime = 0;
 
 const tileMap = new TileMap(centralCavern);
+const levelState = new LevelState(centralCavern);
 const input = new InputHandler();
 
 const willy = new MinerWilly(
@@ -34,6 +36,7 @@ const willy = new MinerWilly(
  */
 function update(): void {
   willy.update(input, tileMap);
+  levelState.update(willy);
 }
 
 /**
@@ -44,6 +47,7 @@ function render(interpolationAlpha: number): void {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   tileMap.render(ctx);
+  levelState.render(ctx);
   willy.render(ctx, interpolationAlpha);
 }
 

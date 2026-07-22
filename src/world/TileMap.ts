@@ -45,13 +45,6 @@ export class TileMap {
   public static readonly RIGHT = TileMap.ORIGIN_X + TileMap.WIDTH;
 
   private static readonly THIN_TILE_HEIGHT = TileMap.TILE_SIZE / 2;
-  private static readonly COLLECTIBLE_SIZE = TileMap.TILE_SIZE / 2;
-  private static readonly COLLECTIBLE_OFFSET =
-    (TileMap.TILE_SIZE - TileMap.COLLECTIBLE_SIZE) / 2;
-  private static readonly EXIT_SIZE_IN_TILES = 2;
-  private static readonly EXIT_SIZE =
-    TileMap.TILE_SIZE * TileMap.EXIT_SIZE_IN_TILES;
-  private static readonly STROKE_ALIGNMENT_OFFSET = 0.5;
 
   private readonly grid: TileType[][];
 
@@ -132,35 +125,6 @@ export class TileMap {
     });
   }
 
-  private renderObjects(ctx: CanvasRenderingContext2D): void {
-    for (const object of this.level.objects) {
-      const x = TileMap.ORIGIN_X + object.column * TileMap.TILE_SIZE;
-      const y = TileMap.ORIGIN_Y + object.row * TileMap.TILE_SIZE;
-
-      if (object.type === 'COLLECTIBLE') {
-        // Temporary visual marker until collectible sprites and behavior exist.
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(
-          x + TileMap.COLLECTIBLE_OFFSET,
-          y + TileMap.COLLECTIBLE_OFFSET,
-          TileMap.COLLECTIBLE_SIZE,
-          TileMap.COLLECTIBLE_SIZE,
-        );
-      } else if (object.type === 'EXIT') {
-        // Portals occupy a 16x16 cell in the original level data.
-        ctx.fillStyle = '#0000ff';
-        ctx.fillRect(x, y, TileMap.EXIT_SIZE, TileMap.EXIT_SIZE);
-        ctx.strokeStyle = '#ffffff';
-        ctx.strokeRect(
-          x + TileMap.STROKE_ALIGNMENT_OFFSET,
-          y + TileMap.STROKE_ALIGNMENT_OFFSET,
-          TileMap.EXIT_SIZE - TileMap.STROKE_ALIGNMENT_OFFSET * 2,
-          TileMap.EXIT_SIZE - TileMap.STROKE_ALIGNMENT_OFFSET * 2,
-        );
-      }
-    }
-  }
-
   private getTileHeight(tile: TileType, row: number): number {
     if (row === TileMap.ROWS - 1) {
       return TileMap.TILE_SIZE;
@@ -194,7 +158,5 @@ export class TileMap {
         );
       }
     }
-
-    this.renderObjects(ctx);
   }
 }
