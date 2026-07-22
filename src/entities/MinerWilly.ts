@@ -4,6 +4,8 @@ import { TileMap } from '../world/TileMap';
 export class MinerWilly {
     public x: number;
     public y: number;
+    private previousX: number;
+    private previousY: number;
 
     // Original animation frames live in a 16x16 cell, although Willy's visible
     // body does not fill the whole width of that cell.
@@ -60,12 +62,17 @@ export class MinerWilly {
     constructor(startX: number, startY: number) {
         this.x = startX;
         this.y = startY;
+        this.previousX = startX;
+        this.previousY = startY;
     }
 
     /**
      * Updates Willy's position and state based on player input and mechanics.
      */
     public update(input: InputHandler, tileMap: TileMap): void {
+        this.previousX = this.x;
+        this.previousY = this.y;
+
         if (this.isFalling) {
             this.handleFreeFall(tileMap);
             this.keepWithinCavernBounds();
@@ -293,13 +300,37 @@ export class MinerWilly {
     /**
      * Visual rendering loop operation.
      */
-    public render(ctx: CanvasRenderingContext2D): void {
+    public render(
+        ctx: CanvasRenderingContext2D,
+        interpolationAlpha: number,
+    ): void {
+        const renderX = this.interpolateCoordinate(
+            this.previousX,
+            this.x,
+            interpolationAlpha,
+        );
+        const renderY = this.interpolateCoordinate(
+            this.previousY,
+            this.y,
+            interpolationAlpha,
+        );
+
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(
-            this.collisionX,
-            this.collisionY,
+            renderX + MinerWilly.COLLISION_OFFSET_X,
+            renderY,
             MinerWilly.COLLISION_WIDTH,
             MinerWilly.COLLISION_HEIGHT,
+        );
+    }
+
+    private interpolateCoordinate(
+        previous: number,
+        current: number,
+        interpolationAlpha: number,
+    ): number {
+        return Math.round(
+            previous + (current - previous) * interpolationAlpha,
         );
     }
 }

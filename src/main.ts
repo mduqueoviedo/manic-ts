@@ -39,12 +39,12 @@ function update(): void {
 /**
  * Renders all game visual modules.
  */
-function render(): void {
+function render(interpolationAlpha: number): void {
   ctx.fillStyle = BACKGROUND_COLOR;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   tileMap.render(ctx);
-  willy.render(ctx);
+  willy.render(ctx, interpolationAlpha);
 }
 
 function gameLoop(currentTime: number): void {
@@ -59,7 +59,7 @@ function gameLoop(currentTime: number): void {
     accumulatedTime -= TICK_TIME;
   }
 
-  render();
+  render(accumulatedTime / TICK_TIME);
   requestAnimationFrame(gameLoop);
 }
 
