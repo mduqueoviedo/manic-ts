@@ -3,8 +3,26 @@ import { InputHandler } from '../core/InputHandler';
 export class MinerWilly {
     public x: number;
     public y: number;
-    public width: number = 16;
-    public height: number = 16;
+
+    // Original animation frames live in a 16x16 cell, although Willy's visible
+    // body does not fill the whole width of that cell.
+    public static readonly SPRITE_WIDTH = 16;
+    public static readonly SPRITE_HEIGHT = 16;
+
+    // Fixed approximation for the collision body while the real sprite masks
+    // and animation frames are not implemented yet.
+    public static readonly COLLISION_WIDTH = 10;
+    public static readonly COLLISION_HEIGHT = 16;
+    private static readonly COLLISION_OFFSET_X =
+        (MinerWilly.SPRITE_WIDTH - MinerWilly.COLLISION_WIDTH) / 2;
+
+    public get collisionX(): number {
+        return this.x + MinerWilly.COLLISION_OFFSET_X;
+    }
+
+    public get collisionY(): number {
+        return this.y;
+    }
 
     // Jump tracking variables
     private isJumping: boolean = false;
@@ -110,6 +128,11 @@ export class MinerWilly {
      */
     public render(ctx: CanvasRenderingContext2D): void {
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.fillRect(
+            this.collisionX,
+            this.collisionY,
+            MinerWilly.COLLISION_WIDTH,
+            MinerWilly.COLLISION_HEIGHT,
+        );
     }
 }
