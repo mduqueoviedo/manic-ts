@@ -2,8 +2,8 @@
 
 ## 1. Resolution and Grid
 * **Canvas Resolution:** 320x200 pixels (Amstrad CPC Mode 1 aspect ratio mapping).
-* **Playable Area:** The top 320x128 pixels contain the cavern, arranged as a
-  40x16 grid of 8x8 pixel tiles.
+* **Playable Area:** The cavern occupies 256x128 pixels, centered horizontally
+  in the top of the canvas and arranged as a 32x16 grid of 8x8 pixel tiles.
 * **HUD Area:** The bottom 72 pixels are reserved for the level name, remaining
   time, lives and score.
 * **Sprite Frame:** Miner Willy's animation frames occupy a 16x16 pixel cell,
@@ -20,9 +20,10 @@
 * **The Golden Rule:** Willy **cannot** change his horizontal direction while in the air. 
   * If jumping from a standstill, he goes straight up and straight down.
   * If jumping while moving right, he follows a fixed parabolic arc to the right and cannot stop or turn left until he touches solid ground.
-* **Jump Duration & Arc:** A standard jump lasts exactly 36 frames (or game ticks).
-  * First 18 frames: Upward vertical movement. The upward speed decreases at fixed steps every few frames.
-  * Remaining 18 frames: Downward vertical movement (falling).
+* **Jump Duration & Arc:** A standard jump lasts exactly 18 frames (or game ticks)
+  and rises 20 pixels above its starting position.
+  * First 9 frames: Upward vertical movement. The upward speed decreases at fixed steps every few frames.
+  * Remaining 9 frames: Downward vertical movement (falling).
   * There are no stationary frames at the apex: vertical movement changes
     directly from 1 pixel upward to 1 pixel downward.
 * **Mid-Air Collisions (Interruption):** If Willy hits a solid tile during a jump, his current momentum is canceled:
@@ -40,7 +41,7 @@
 * **Deadly Tiles:** Any intersection with spikes or environmental hazards triggers the death sequence immediately.
 
 ## 5. Timing and Frame Rate
-* **Game Speed:** The original game logic ticks at 25 frames per second (FPS). 
+* **Game Speed:** The game logic advances at 12.5 ticks per second.
 * **Browser Loop:** Rendering uses `requestAnimationFrame`, while game logic is
-  advanced through a fixed 25 Hz accumulator so movement does not depend on the
-  display refresh rate.
+  advanced through a fixed 12.5 Hz accumulator so movement does not depend on
+  the display refresh rate.
