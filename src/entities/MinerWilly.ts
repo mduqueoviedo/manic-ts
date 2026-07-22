@@ -30,14 +30,18 @@ export class MinerWilly {
     private jumpFrame: number = 0;
     private jumpDirection: 'NONE' | 'LEFT' | 'RIGHT' = 'NONE';
 
-    // Constant lookup array for vertical movement step per frame during a jump
-    // First 18 frames are upward steps (-Y), next 18 frames are downward steps (+Y)
+    // Constant lookup array for vertical movement per frame during a jump.
+    // It preserves a 36-frame, 30-pixel arc without pausing at the apex.
     private static readonly JUMP_OFFSET_TABLE: number[] = [
-        -4, -4, -4, -3, -3, -3, -2, -2, -2, -1, -1, -1, 0, 0, 0, 0, 0, 0, // Ascent & Apex (Frames 0-17)
-        0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4  // Descent (Frames 18-35)
+        -3, -3, -3,
+        -2, -2, -2, -2, -2, -2,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1,
+        2, 2, 2, 2, 2, 2,
+        3, 3, 3,
     ];
 
-    // Fixed terminal velocity when falling freely (matching the last step of the jump table)
+    // Fixed downward speed used after walking off a platform.
     private static readonly FALL_SPEED = 4;
 
     constructor(startX: number, startY: number) {
