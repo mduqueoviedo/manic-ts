@@ -1,23 +1,33 @@
 import { TileMap } from './world/TileMap';
 import { InputHandler } from './core/InputHandler';
 import { MinerWilly } from './entities/MinerWilly';
+import { centralCavern } from './levels/centralCavern';
+import {
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
+  LOGIC_TICK_RATE,
+  MILLISECONDS_PER_SECOND,
+} from './core/GameConfig';
+
+const BACKGROUND_COLOR = '#000000';
 
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 
-canvas.width = 320;
-canvas.height = 200;
+canvas.width = CANVAS_WIDTH;
+canvas.height = CANVAS_HEIGHT;
 
-const TARGET_FPS = 25;
-const FRAME_TIME = 1000 / TARGET_FPS;
+const TICK_TIME = MILLISECONDS_PER_SECOND / LOGIC_TICK_RATE;
 let lastTime = 0;
 let accumulatedTime = 0;
 
-const tileMap = new TileMap();
+const tileMap = new TileMap(centralCavern);
 const input = new InputHandler();
 
-// Start Willy on the solid test platform so its edges can be inspected.
-const willy = new MinerWilly(50, 56);
+const willy = new MinerWilly(
+  TileMap.ORIGIN_X + centralCavern.spawn.x,
+  TileMap.ORIGIN_Y + centralCavern.spawn.y,
+);
 
 /**
  * Updates the game simulation.
@@ -30,7 +40,7 @@ function update(): void {
  * Renders all game visual modules.
  */
 function render(): void {
-  ctx.fillStyle = '#000000';
+  ctx.fillStyle = BACKGROUND_COLOR;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   tileMap.render(ctx);
@@ -44,9 +54,9 @@ function gameLoop(currentTime: number): void {
   lastTime = currentTime;
   accumulatedTime += deltaTime;
 
-  while (accumulatedTime >= FRAME_TIME) {
+  while (accumulatedTime >= TICK_TIME) {
     update();
-    accumulatedTime -= FRAME_TIME;
+    accumulatedTime -= TICK_TIME;
   }
 
   render();
