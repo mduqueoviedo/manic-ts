@@ -1,88 +1,56 @@
-import './styles.css'
-import { testMap, TILE_SIZE, WIDTH, HEIGHT } from './map'
-import { Player } from './player'
+import { TileMap } from './world/TileMap';
+import { InputHandler } from './core/InputHandler';
+import { MinerWilly } from './entities/MinerWilly';
 
-const SCALE = 4
+const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
+const ctx = canvas.getContext('2d')!;
 
-class Game {
-  canvas: HTMLCanvasElement
-  ctx: CanvasRenderingContext2D
-  player: Player
-  keys = { left: false, right: false, jump: false }
+canvas.width = 320;
+canvas.height = 200;
 
-  lastTime = 0
-  accumulator = 0
-  readonly step = 1000 / 60
+const TARGET_FPS = 25;
+const FRAME_TIME = 1000 / TARGET_FPS;
+let lastTime = 0;
+let accumulatedTime = 0;
 
-  constructor(){
-    const c = document.getElementById('game-canvas') as HTMLCanvasElement
-    if (!c) throw new Error('Canvas not found')
-    this.canvas = c
-    this.canvas.width = WIDTH
-    this.canvas.height = HEIGHT
-    const ctx = this.canvas.getContext('2d')
-    if (!ctx) throw new Error('2D Context not available')
-    this.ctx = ctx
-    this.ctx.imageSmoothingEnabled = false
+const tileMap = new TileMap();
+const input = new InputHandler();
 
-    this.player = new Player()
+// Create Willy at a temporary ground level position (y: 104 aligns with the green floor)
+const willy = new MinerWilly(50, 104);
 
-    this.setupInput()
-  }
-
-  setupInput(){
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') this.keys.left = true
-      if (e.key === 'ArrowRight') this.keys.right = true
-      if (e.key === ' ' || e.key === 'ArrowUp') this.keys.jump = true
-    })
-    window.addEventListener('keyup', (e) => {
-      if (e.key === 'ArrowLeft') this.keys.left = false
-      if (e.key === 'ArrowRight') this.keys.right = false
-      if (e.key === ' ' || e.key === 'ArrowUp') this.keys.jump = false
-    })
-  }
-
-  start(){
-    requestAnimationFrame(this.loop.bind(this))
-  }
-
-  loop(time: number){
-    if (!this.lastTime) this.lastTime = time
-    const delta = time - this.lastTime
-    this.lastTime = time
-    this.accumulator += delta
-
-    while(this.accumulator >= this.step){
-      this.update(this.step / 1000)
-      this.accumulator -= this.step
-    }
-
-    this.render()
-    requestAnimationFrame(this.loop.bind(this))
-  }
-
-  update(dt: number){
-    this.player.update(dt, this.keys)
-  }
-
-  render(){
-    this.ctx.clearRect(0,0,WIDTH,HEIGHT)
-    // Render the simple background
-    this.ctx.fillStyle = '#012'
-    this.ctx.fillRect(0,0,WIDTH,HEIGHT)
-
-    // Render the test map (floor)
-    this.ctx.fillStyle = '#444'
-    for(let y=0;y<testMap.length;y++){
-      for(let x=0;x<testMap[y].length;x++){
-        if (testMap[y][x] === 1) this.ctx.fillRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
-      }
-    }
-
-    this.player.render(this.ctx)
-  }
+/**
+ * Updates the game simulation.
+ */
+function update(): void {
+  willy.update(input);
 }
 
-const game = new Game()
-game.start()
+/**
+ * Renders all game visual modules.
+ */
+function render(): void {
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  tileMap.render(ctx);
+  willy.render(ctx);
+}
+
+function gameLoop(currentTime: number): void {
+  if (!lastTime) lastTime = currentTime;
+  
+  const deltaTime = currentTime - lastTime;
+  lastTime = currentTime;
+  accumulatedTime += deltaTime;
+
+  while (accumulatedTime >= FRAME_TIME) {
+    update();
+    accumulatedTime -= FRAME_TIME;
+  }
+
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);

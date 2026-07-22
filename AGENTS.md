@@ -10,3 +10,4 @@
 - The project is a Vite + TypeScript + Canvas game prototype.
 - Keep code, comments, and documentation in English.
 - Prefer small, testable changes.
+- When referencing original game behavior, use external sources only and do not add disassembly or third-party source code files to the repository.
