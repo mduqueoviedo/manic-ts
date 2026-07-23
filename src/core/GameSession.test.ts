@@ -10,6 +10,7 @@ import type { PlayerInput } from './InputHandler';
 import { GameSession } from './GameSession';
 
 const MAX_TICKS_UNTIL_DEATH = 10;
+const TICKS_UNTIL_HAZARD_EDGE_CONTACT = 4;
 
 const NO_INPUT: PlayerInput = {
   isLeftPressed: false,
@@ -79,6 +80,20 @@ describe('GameSession', () => {
     expect(session.playerPosition).toEqual(spawn);
     expect(session.remainingCollectibles).toBe(1);
     expect(session.isGameOver).toBe(false);
+  });
+
+  it('does not kill Willy before his visible body enters a hazard', () => {
+    const session = new GameSession(createLevel());
+
+    for (let tick = 0; tick < TICKS_UNTIL_HAZARD_EDGE_CONTACT; tick++) {
+      session.update(RIGHT_INPUT);
+    }
+
+    expect(session.livesRemaining).toBe(3);
+
+    session.update(RIGHT_INPUT);
+
+    expect(session.livesRemaining).toBe(2);
   });
 
   it('stops updating after the final life is lost', () => {

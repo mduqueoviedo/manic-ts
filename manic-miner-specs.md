@@ -18,8 +18,9 @@
   rendered as an 8x16 rectangle and collectibles as 7x7 rectangles. One-way,
   collapsible and conveyor tiles use visible heights of 5, 6 and 7 pixels
   respectively.
-* **Provisional Collision Body:** Until sprite masks are implemented, Willy uses
-  a centered 10x16 pixel collision body.
+* **Provisional Collision Body:** Until sprite masks are implemented, Willy's
+  8x16 pixel collision body matches the visible placeholder exactly. Invisible
+  pixels must not collide with terrain or hazards.
 
 ## 2. Movement Mechanics (Miner Willy)
 * **Horizontal Speed:** Fixed speed. Willy moves exactly 2 pixels per frame horizontally. No inertia, no acceleration, no deceleration.

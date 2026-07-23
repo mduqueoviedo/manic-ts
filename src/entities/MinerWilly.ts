@@ -17,12 +17,12 @@ export class MinerWilly {
     public static readonly PLACEHOLDER_HEIGHT = MinerWilly.SPRITE_HEIGHT;
     private static readonly PLACEHOLDER_OFFSET_X = 0;
 
-    // Fixed approximation for the collision body while the real sprite masks
-    // and animation frames are not implemented yet.
-    public static readonly COLLISION_WIDTH = 10;
-    public static readonly COLLISION_HEIGHT = 16;
+    // Until real sprite masks exist, collision must match the placeholder
+    // exactly so invisible pixels cannot hit walls or hazards.
+    public static readonly COLLISION_WIDTH = MinerWilly.PLACEHOLDER_WIDTH;
+    public static readonly COLLISION_HEIGHT = MinerWilly.PLACEHOLDER_HEIGHT;
     private static readonly COLLISION_OFFSET_X =
-        (MinerWilly.SPRITE_WIDTH - MinerWilly.COLLISION_WIDTH) / 2;
+        MinerWilly.PLACEHOLDER_OFFSET_X;
 
     // Movement parameters shared by every state that can move Willy.
     private static readonly HORIZONTAL_SPEED = 2;
