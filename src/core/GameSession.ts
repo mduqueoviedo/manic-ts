@@ -9,11 +9,22 @@ import type { LevelDefinition } from '../levels/LevelDefinition';
 import { LevelState } from '../world/LevelState';
 import { TileMap } from '../world/TileMap';
 
+const HUD_FONT = '8px monospace';
 const HUD_COLOR = '#ffffff';
+const HUD_TOP_MARGIN = 12;
+const HUD_TOP = TileMap.ORIGIN_Y + TileMap.HEIGHT + HUD_TOP_MARGIN;
+
+const GAME_OVER_FONT = '24px monospace';
 const GAME_OVER_COLOR = '#ff0000';
-const HUD_TOP = TileMap.ORIGIN_Y + TileMap.HEIGHT + 12;
-const GAME_OVER_Y = CANVAS_HEIGHT / 2 - 8;
-const RESTART_PROMPT_Y = GAME_OVER_Y + 24;
+const GAME_OVER_TEXT = 'GAME OVER';
+const GAME_OVER_VERTICAL_OFFSET = 8;
+const GAME_OVER_Y = CANVAS_HEIGHT / 2 - GAME_OVER_VERTICAL_OFFSET;
+
+const RESTART_PROMPT_FONT = '10px monospace';
+const RESTART_PROMPT_TEXT = 'Press 1 to restart';
+const RESTART_PROMPT_GAP = 24;
+const RESTART_PROMPT_Y = GAME_OVER_Y + RESTART_PROMPT_GAP;
+const SCREEN_CENTER_X = CANVAS_WIDTH / 2;
 
 /**
  * Owns the current life and recreates all level-scoped state after a death.
@@ -116,7 +127,7 @@ export class GameSession {
       return;
     }
 
-    ctx.font = '8px monospace';
+    ctx.font = HUD_FONT;
     ctx.textBaseline = 'top';
     ctx.fillStyle = HUD_COLOR;
     ctx.fillText(`LIVES ${this.remainingLives}`, TileMap.ORIGIN_X, HUD_TOP);
@@ -127,13 +138,17 @@ export class GameSession {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    ctx.font = '24px monospace';
+    ctx.font = GAME_OVER_FONT;
     ctx.fillStyle = GAME_OVER_COLOR;
-    ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, GAME_OVER_Y);
+    ctx.fillText(GAME_OVER_TEXT, SCREEN_CENTER_X, GAME_OVER_Y);
 
-    ctx.font = '10px monospace';
+    ctx.font = RESTART_PROMPT_FONT;
     ctx.fillStyle = HUD_COLOR;
-    ctx.fillText('Press 1 to restart', CANVAS_WIDTH / 2, RESTART_PROMPT_Y);
+    ctx.fillText(
+      RESTART_PROMPT_TEXT,
+      SCREEN_CENTER_X,
+      RESTART_PROMPT_Y,
+    );
 
     ctx.restore();
   }

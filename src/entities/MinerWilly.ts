@@ -1,6 +1,8 @@
 import type { PlayerInput } from '../core/InputHandler';
 import { TileMap } from '../world/TileMap';
 
+const LAST_PIXEL_OFFSET = 1;
+
 export class MinerWilly {
     public x: number;
     public y: number;
@@ -11,6 +13,9 @@ export class MinerWilly {
     // body does not fill the whole width of that cell.
     public static readonly SPRITE_WIDTH = 16;
     public static readonly SPRITE_HEIGHT = 16;
+    public static readonly PLACEHOLDER_WIDTH = 8;
+    public static readonly PLACEHOLDER_HEIGHT = MinerWilly.SPRITE_HEIGHT;
+    private static readonly PLACEHOLDER_OFFSET_X = 0;
 
     // Fixed approximation for the collision body while the real sprite masks
     // and animation frames are not implemented yet.
@@ -33,11 +38,15 @@ export class MinerWilly {
     }
 
     private get collisionRight(): number {
-        return this.collisionX + MinerWilly.COLLISION_WIDTH - 1;
+        return this.collisionX
+            + MinerWilly.COLLISION_WIDTH
+            - LAST_PIXEL_OFFSET;
     }
 
     private get collisionBottom(): number {
-        return this.collisionY + MinerWilly.COLLISION_HEIGHT - 1;
+        return this.collisionY
+            + MinerWilly.COLLISION_HEIGHT
+            - LAST_PIXEL_OFFSET;
     }
 
     public overlapsRectangle(
@@ -319,10 +328,10 @@ export class MinerWilly {
 
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(
-            renderX + MinerWilly.COLLISION_OFFSET_X,
+            renderX + MinerWilly.PLACEHOLDER_OFFSET_X,
             renderY,
-            MinerWilly.COLLISION_WIDTH,
-            MinerWilly.COLLISION_HEIGHT,
+            MinerWilly.PLACEHOLDER_WIDTH,
+            MinerWilly.PLACEHOLDER_HEIGHT,
         );
     }
 
