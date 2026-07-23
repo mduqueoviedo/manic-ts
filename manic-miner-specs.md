@@ -43,6 +43,21 @@
   platform between the previous and current game tick.
 * **Collapsible Tiles (Crumbling Floors):** When Willy stands on them, their visual state changes, and they disappear completely after a fixed number of frames, turning into 'EMPTY' space.
 * **Deadly Tiles:** Any intersection with spikes or environmental hazards triggers the death sequence immediately.
+* **Conveyor Tiles:** A conveyor supports Willy from above and moves him in its
+  defined horizontal direction.
+  * Once Willy is walking on a conveyor, its direction takes control. Opposite
+    directional input cannot turn him around, and he cannot start a jump
+    against the conveyor.
+  * There is a landing exception. If Willy lands on a conveyor from a jump
+    whose locked direction is opposite to the conveyor, he keeps that direction
+    for the landing moment. Jumping again immediately allows him to launch
+    against the conveyor.
+  * If that immediate jump is not taken, the conveyor assumes control and the
+    opportunity is lost. Willy cannot later turn around or jump against it
+    while he remains grounded on the conveyor.
+  * The precise input window on the landing tick, including whether the jump
+    button may be held before contact, must be confirmed against the Amstrad CPC
+    version during implementation.
 * **Collectibles:** A collectible disappears when Willy's collision body
   overlaps its 8x8 cell.
 * **Exit:** The exit remains locked until every collectible has been collected.
