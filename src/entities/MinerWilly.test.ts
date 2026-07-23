@@ -39,6 +39,19 @@ function createTileMap(rows: Readonly<Record<number, string>> = {}): TileMap {
 }
 
 describe('MinerWilly', () => {
+  it('aligns the provisional hitbox with the visible placeholder', () => {
+    const willy = new MinerWilly(START_X, START_Y);
+
+    expect(willy.collisionX).toBe(willy.x);
+    expect(willy.collisionY).toBe(willy.y);
+    expect(MinerWilly.COLLISION_WIDTH).toBe(
+      MinerWilly.PLACEHOLDER_WIDTH,
+    );
+    expect(MinerWilly.COLLISION_HEIGHT).toBe(
+      MinerWilly.PLACEHOLDER_HEIGHT,
+    );
+  });
+
   it('walks by one fixed horizontal step while supported', () => {
     const tileMap = createTileMap({ [GROUND_ROW]: SOLID_TILE_ROW });
     const willy = new MinerWilly(START_X, START_Y);
@@ -78,8 +91,7 @@ describe('MinerWilly', () => {
     const flushWithWall =
       TileMap.ORIGIN_X
       + WALL_COLUMN * TileMap.TILE_SIZE
-      - MinerWilly.COLLISION_WIDTH
-      - (MinerWilly.SPRITE_WIDTH - MinerWilly.COLLISION_WIDTH) / 2;
+      - MinerWilly.PLACEHOLDER_WIDTH;
     const willy = new MinerWilly(flushWithWall, START_Y);
 
     willy.update(RIGHT_INPUT, tileMap);

@@ -66,7 +66,7 @@ These dimensions describe visible placeholder bounds, not collision masks.
 | Element | Placeholder size |
 | --- | --- |
 | Willy's initial visible frame | 8x16 pixels |
-| Willy's provisional collision body | 10x16 pixels |
+| Willy's provisional collision body | 8x16 pixels |
 | Collectible | 7x7 pixels |
 | One-way floor | 8x5 pixels |
 | Collapsible floor | 8x6 pixels |
