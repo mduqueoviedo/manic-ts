@@ -48,7 +48,18 @@
 * **Exit:** The exit remains locked until every collectible has been collected.
   Entering the unlocked 16x16 exit marks the cavern as complete.
 
-## 5. Timing and Frame Rate
+## 5. Lives and Level Restarts
+* **Starting Lives:** A new game starts with 3 lives.
+* **Life Loss:** Touching a deadly tile immediately consumes one life.
+* **Full Restart:** When a life remains, the entire cavern restarts from its
+  initial state. This includes Willy's position and all collected items, and
+  will also include the air supply, enemies and mutable terrain as those
+  systems are added.
+* **Game Over:** Losing the final life stops the simulation.
+* **Air Supply:** Running out of air will also consume a life, but the air
+  countdown and its death condition are not implemented yet.
+
+## 6. Timing and Frame Rate
 * **Game Speed:** The game logic advances at 12.5 ticks per second.
 * **Browser Loop:** Rendering uses `requestAnimationFrame`, while game logic is
   advanced through a fixed 12.5 Hz accumulator so movement does not depend on

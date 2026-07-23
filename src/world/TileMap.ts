@@ -40,6 +40,7 @@ export class TileMap {
   public static readonly COLUMNS = LEVEL_COLUMNS;
   public static readonly ROWS = LEVEL_ROWS;
   public static readonly WIDTH = TileMap.COLUMNS * TileMap.TILE_SIZE;
+  public static readonly HEIGHT = TileMap.ROWS * TileMap.TILE_SIZE;
   public static readonly ORIGIN_X = (CANVAS_WIDTH - TileMap.WIDTH) / 2;
   public static readonly ORIGIN_Y = 0;
   public static readonly RIGHT = TileMap.ORIGIN_X + TileMap.WIDTH;
@@ -95,6 +96,35 @@ export class TileMap {
       || tile === TILE_TYPES.ONE_WAY
       || tile === TILE_TYPES.COLLAPSIBLE
       || tile === TILE_TYPES.CONVEYOR;
+  }
+
+  /**
+   * Checks every tile touched by a pixel rectangle for a deadly tile.
+   */
+  public overlapsDeadlyTile(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ): boolean {
+    const firstColumn = Math.floor((x - TileMap.ORIGIN_X) / TileMap.TILE_SIZE);
+    const lastColumn = Math.floor(
+      (x + width - 1 - TileMap.ORIGIN_X) / TileMap.TILE_SIZE,
+    );
+    const firstRow = Math.floor((y - TileMap.ORIGIN_Y) / TileMap.TILE_SIZE);
+    const lastRow = Math.floor(
+      (y + height - 1 - TileMap.ORIGIN_Y) / TileMap.TILE_SIZE,
+    );
+
+    for (let row = firstRow; row <= lastRow; row++) {
+      for (let column = firstColumn; column <= lastColumn; column++) {
+        if (this.getTileAtGrid(column, row) === TILE_TYPES.DEADLY) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private createGrid(rows: readonly string[]): TileType[][] {
