@@ -1,4 +1,4 @@
-import { InputHandler } from '../core/InputHandler';
+import type { PlayerInput } from '../core/InputHandler';
 import { TileMap } from '../world/TileMap';
 
 export class MinerWilly {
@@ -78,7 +78,7 @@ export class MinerWilly {
     /**
      * Updates Willy's position and state based on player input and mechanics.
      */
-    public update(input: InputHandler, tileMap: TileMap): void {
+    public update(input: PlayerInput, tileMap: TileMap): void {
         this.previousX = this.x;
         this.previousY = this.y;
 
@@ -104,7 +104,7 @@ export class MinerWilly {
     /**
      * Standard horizontal walking movement when touching solid ground.
      */
-    private handleGroundMovement(input: InputHandler, tileMap: TileMap): void {
+    private handleGroundMovement(input: PlayerInput, tileMap: TileMap): void {
         if (input.isLeftPressed) {
             this.moveHorizontally(tileMap, -MinerWilly.HORIZONTAL_SPEED);
         } else if (input.isRightPressed) {

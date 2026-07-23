@@ -1,8 +1,6 @@
-import { TileMap } from './world/TileMap';
 import { InputHandler } from './core/InputHandler';
-import { MinerWilly } from './entities/MinerWilly';
+import { GameSession } from './core/GameSession';
 import { centralCavern } from './levels/centralCavern';
-import { LevelState } from './world/LevelState';
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -22,21 +20,19 @@ const TICK_TIME = MILLISECONDS_PER_SECOND / LOGIC_TICK_RATE;
 let lastTime = 0;
 let accumulatedTime = 0;
 
-const tileMap = new TileMap(centralCavern);
-const levelState = new LevelState(centralCavern);
 const input = new InputHandler();
-
-const willy = new MinerWilly(
-  TileMap.ORIGIN_X + centralCavern.spawn.x,
-  TileMap.ORIGIN_Y + centralCavern.spawn.y,
-);
+const gameSession = new GameSession(centralCavern);
 
 /**
  * Updates the game simulation.
  */
 function update(): void {
-  willy.update(input, tileMap);
-  levelState.update(willy);
+  if (input.consumeRestartRequest()) {
+    gameSession.restartGame();
+    return;
+  }
+
+  gameSession.update(input);
 }
 
 /**
@@ -46,9 +42,7 @@ function render(interpolationAlpha: number): void {
   ctx.fillStyle = BACKGROUND_COLOR;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  tileMap.render(ctx);
-  levelState.render(ctx);
-  willy.render(ctx, interpolationAlpha);
+  gameSession.render(ctx, interpolationAlpha);
 }
 
 function gameLoop(currentTime: number): void {
