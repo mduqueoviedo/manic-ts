@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { LevelDefinition } from '../levels/LevelDefinition';
+import {
+  createEmptyTileRows,
+  createTestLevel,
+  EMPTY_TILE_ROW,
+  SOLID_TILE_ROW,
+} from '../test/levelFixtures';
 import type { PlayerInput } from './InputHandler';
 import { GameSession } from './GameSession';
+
+const MAX_TICKS_UNTIL_DEATH = 10;
 
 const NO_INPUT: PlayerInput = {
   isLeftPressed: false,
@@ -15,35 +23,49 @@ const RIGHT_INPUT: PlayerInput = {
 };
 
 function createLevel(): LevelDefinition {
-  return {
+  const tiles = createEmptyTileRows();
+  tiles[1] = '  !'.padEnd(EMPTY_TILE_ROW.length);
+  tiles[3] = SOLID_TILE_ROW;
+  tiles[15] = SOLID_TILE_ROW;
+
+  return createTestLevel({
     name: 'Hazard test',
     spawn: { x: 0, y: 8 },
-    tiles: [
-      '                                ',
-      '  !                             ',
-      '                                ',
-      '################################',
-      '                                ',
-      '                                ',
-      '                                ',
-      '                                ',
-      '                                ',
-      '                                ',
-      '                                ',
-      '                                ',
-      '                                ',
-      '                                ',
-      '                                ',
-      '################################',
-    ],
+    tiles,
     objects: [
       { type: 'COLLECTIBLE', column: 0, row: 1 },
       { type: 'EXIT', column: 28, row: 1 },
     ],
-  };
+  });
+}
+
+function moveIntoHazard(session: GameSession): void {
+  const livesBeforeHazard = session.livesRemaining;
+
+  for (
+    let tick = 0;
+    tick < MAX_TICKS_UNTIL_DEATH
+      && session.livesRemaining === livesBeforeHazard;
+    tick++
+  ) {
+    session.update(RIGHT_INPUT);
+  }
+
+  if (session.livesRemaining === livesBeforeHazard) {
+    throw new Error('Test player did not reach the hazard.');
+  }
 }
 
 describe('GameSession', () => {
+  it.each([0, -1, 1.5])(
+    'rejects an invalid initial life count (%s)',
+    (initialLives) => {
+      expect(() => new GameSession(createLevel(), initialLives)).toThrow(
+        'A game must start with at least one life.',
+      );
+    },
+  );
+
   it('consumes a life and fully restarts the level after touching a hazard', () => {
     const session = new GameSession(createLevel());
     const spawn = session.playerPosition;
@@ -51,9 +73,7 @@ describe('GameSession', () => {
     session.update(NO_INPUT);
     expect(session.remainingCollectibles).toBe(0);
 
-    for (let tick = 0; tick < 10 && session.livesRemaining === 3; tick++) {
-      session.update(RIGHT_INPUT);
-    }
+    moveIntoHazard(session);
 
     expect(session.livesRemaining).toBe(2);
     expect(session.playerPosition).toEqual(spawn);
@@ -64,9 +84,7 @@ describe('GameSession', () => {
   it('stops updating after the final life is lost', () => {
     const session = new GameSession(createLevel(), 1);
 
-    for (let tick = 0; tick < 4; tick++) {
-      session.update(RIGHT_INPUT);
-    }
+    moveIntoHazard(session);
 
     expect(session.livesRemaining).toBe(0);
     expect(session.isGameOver).toBe(true);
@@ -81,9 +99,7 @@ describe('GameSession', () => {
     const spawn = session.playerPosition;
 
     session.update(NO_INPUT);
-    for (let tick = 0; tick < 10 && session.livesRemaining === 3; tick++) {
-      session.update(RIGHT_INPUT);
-    }
+    moveIntoHazard(session);
 
     expect(session.livesRemaining).toBe(2);
     session.update(NO_INPUT);

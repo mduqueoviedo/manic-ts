@@ -13,9 +13,8 @@ const EXIT_UNLOCKED_COLOR = '#ffff00';
 const EXIT_COMPLETE_COLOR = '#00ff00';
 
 export class LevelState {
-  private static readonly COLLECTIBLE_SIZE = TileMap.TILE_SIZE / 2;
-  private static readonly COLLECTIBLE_OFFSET =
-    (TileMap.TILE_SIZE - LevelState.COLLECTIBLE_SIZE) / 2;
+  private static readonly COLLECTIBLE_SIZE = 7;
+  private static readonly COLLECTIBLE_OFFSET = 0;
   private static readonly EXIT_SIZE_IN_TILES = 2;
   private static readonly EXIT_SIZE =
     TileMap.TILE_SIZE * LevelState.EXIT_SIZE_IN_TILES;

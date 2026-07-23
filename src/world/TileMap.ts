@@ -12,10 +12,14 @@ export const TILE_TYPES = {
   COLLAPSIBLE: 2, // Floors that crumble when stepped on
   DEADLY: 3,      // Spikes or hazards
   ONE_WAY: 4,     // Platforms that only support Willy while he is descending
-  CONVEYOR: 5,    // Floors that will move Willy horizontally
+  CONVEYOR_LEFT: 5,
+  CONVEYOR_RIGHT: 6,
 } as const;
 
 export type TileType = typeof TILE_TYPES[keyof typeof TILE_TYPES];
+
+const TILE_SIZE = 8;
+const LAST_PIXEL_OFFSET = 1;
 
 const TILE_BY_SYMBOL: Readonly<Record<string, TileType>> = {
   ' ': TILE_TYPES.EMPTY,
@@ -23,7 +27,8 @@ const TILE_BY_SYMBOL: Readonly<Record<string, TileType>> = {
   '-': TILE_TYPES.ONE_WAY,
   'x': TILE_TYPES.COLLAPSIBLE,
   '!': TILE_TYPES.DEADLY,
-  '>': TILE_TYPES.CONVEYOR,
+  '<': TILE_TYPES.CONVEYOR_LEFT,
+  '>': TILE_TYPES.CONVEYOR_RIGHT,
 };
 
 const TILE_COLORS: Readonly<Record<TileType, string>> = {
@@ -32,11 +37,30 @@ const TILE_COLORS: Readonly<Record<TileType, string>> = {
   [TILE_TYPES.ONE_WAY]: '#00ffff',
   [TILE_TYPES.COLLAPSIBLE]: '#ffff00',
   [TILE_TYPES.DEADLY]: '#ff0000',
-  [TILE_TYPES.CONVEYOR]: '#ff00ff',
+  [TILE_TYPES.CONVEYOR_LEFT]: '#ff00ff',
+  [TILE_TYPES.CONVEYOR_RIGHT]: '#ff00ff',
 };
 
+const TILE_HEIGHT_BY_TYPE: Readonly<Record<TileType, number>> = {
+  [TILE_TYPES.EMPTY]: 0,
+  [TILE_TYPES.SOLID]: TILE_SIZE,
+  [TILE_TYPES.ONE_WAY]: 5,
+  [TILE_TYPES.COLLAPSIBLE]: 6,
+  [TILE_TYPES.DEADLY]: TILE_SIZE,
+  [TILE_TYPES.CONVEYOR_LEFT]: 7,
+  [TILE_TYPES.CONVEYOR_RIGHT]: 7,
+};
+
+const SUPPORT_TILE_TYPES: ReadonlySet<TileType> = new Set([
+  TILE_TYPES.SOLID,
+  TILE_TYPES.ONE_WAY,
+  TILE_TYPES.COLLAPSIBLE,
+  TILE_TYPES.CONVEYOR_LEFT,
+  TILE_TYPES.CONVEYOR_RIGHT,
+]);
+
 export class TileMap {
-  public static readonly TILE_SIZE = 8; // Each tile is 8x8 pixels
+  public static readonly TILE_SIZE = TILE_SIZE;
   public static readonly COLUMNS = LEVEL_COLUMNS;
   public static readonly ROWS = LEVEL_ROWS;
   public static readonly WIDTH = TileMap.COLUMNS * TileMap.TILE_SIZE;
@@ -44,8 +68,6 @@ export class TileMap {
   public static readonly ORIGIN_X = (CANVAS_WIDTH - TileMap.WIDTH) / 2;
   public static readonly ORIGIN_Y = 0;
   public static readonly RIGHT = TileMap.ORIGIN_X + TileMap.WIDTH;
-
-  private static readonly THIN_TILE_HEIGHT = TileMap.TILE_SIZE / 2;
 
   private readonly grid: TileType[][];
 
@@ -92,10 +114,7 @@ export class TileMap {
    * Identifies floor-like tiles that support Willy from above.
    */
   public isSupportTile(tile: TileType | undefined): boolean {
-    return tile === TILE_TYPES.SOLID
-      || tile === TILE_TYPES.ONE_WAY
-      || tile === TILE_TYPES.COLLAPSIBLE
-      || tile === TILE_TYPES.CONVEYOR;
+    return tile !== undefined && SUPPORT_TILE_TYPES.has(tile);
   }
 
   /**
@@ -107,13 +126,15 @@ export class TileMap {
     width: number,
     height: number,
   ): boolean {
+    const lastX = x + width - LAST_PIXEL_OFFSET;
+    const lastY = y + height - LAST_PIXEL_OFFSET;
     const firstColumn = Math.floor((x - TileMap.ORIGIN_X) / TileMap.TILE_SIZE);
     const lastColumn = Math.floor(
-      (x + width - 1 - TileMap.ORIGIN_X) / TileMap.TILE_SIZE,
+      (lastX - TileMap.ORIGIN_X) / TileMap.TILE_SIZE,
     );
     const firstRow = Math.floor((y - TileMap.ORIGIN_Y) / TileMap.TILE_SIZE);
     const lastRow = Math.floor(
-      (y + height - 1 - TileMap.ORIGIN_Y) / TileMap.TILE_SIZE,
+      (lastY - TileMap.ORIGIN_Y) / TileMap.TILE_SIZE,
     );
 
     for (let row = firstRow; row <= lastRow; row++) {
@@ -155,18 +176,6 @@ export class TileMap {
     });
   }
 
-  private getTileHeight(tile: TileType, row: number): number {
-    if (row === TileMap.ROWS - 1) {
-      return TileMap.TILE_SIZE;
-    }
-
-    return tile === TILE_TYPES.ONE_WAY
-      || tile === TILE_TYPES.COLLAPSIBLE
-      || tile === TILE_TYPES.CONVEYOR
-      ? TileMap.THIN_TILE_HEIGHT
-      : TileMap.TILE_SIZE;
-  }
-
   /**
    * Draws the map to the canvas context based on the grid matrix data.
    */
@@ -184,7 +193,7 @@ export class TileMap {
           TileMap.ORIGIN_X + col * size,
           TileMap.ORIGIN_Y + row * size,
           size,
-          this.getTileHeight(tile, row),
+          TILE_HEIGHT_BY_TYPE[tile],
         );
       }
     }

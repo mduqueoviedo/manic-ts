@@ -35,16 +35,20 @@ should be trustworthy enough to support dynamic terrain and enemies.
 - [x] Add deadly terrain, lives, full cavern restart and game over.
 - [x] Add a temporary `1` shortcut for restarting the complete game state.
 - [x] Add automated coverage for the life-loss and restart loop.
+- [x] Add responsive integer display scaling without changing game simulation.
 
 ## Milestone 1: Central Cavern graybox validation
 
-- [ ] Audit terrain placement against external visual references.
-- [ ] Audit Willy's spawn, collectibles, hazards and exit positions.
+- [x] Audit terrain placement against external visual references.
+- [x] Audit Willy's spawn, collectibles, hazards and exit positions.
 - [ ] Verify that every intended route works with the current movement rules.
 - [ ] Identify unintended shortcuts, unreachable areas and trapping positions.
 - [ ] Refine provisional collision dimensions where they affect traversal.
 - [ ] Record a short manual route checklist for future regression testing.
-- [ ] Separate tile-level accuracy from later sprite-mask and pixel-art work.
+- [x] Separate tile-level accuracy from later sprite-mask and pixel-art work.
+
+See the [Central Cavern graybox audit](./docs/central-cavern-graybox.md) for
+reference sources, verified coordinates and remaining checks.
 
 ### Completion criteria
 

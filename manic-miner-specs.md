@@ -2,6 +2,11 @@
 
 ## 1. Resolution and Grid
 * **Canvas Resolution:** 320x200 pixels (Amstrad CPC Mode 1 aspect ratio mapping).
+* **Display Scaling:** The internal canvas remains 320x200. Its CSS display size
+  uses the largest integer scale that fits the browser viewport so presentation
+  can grow without changing coordinates, timing, collisions or movement.
+  Fractional scaling is used only when the viewport is smaller than the native
+  canvas.
 * **Playable Area:** The cavern occupies 256x128 pixels, centered horizontally
   in the top of the canvas and arranged as a 32x16 grid of 8x8 pixel tiles.
 * **HUD Area:** The bottom 72 pixels are reserved for the level name, remaining
@@ -9,6 +14,10 @@
 * **Sprite Frame:** Miner Willy's animation frames occupy a 16x16 pixel cell,
   but his visible body is taller than it is wide and does not fill the entire
   frame.
+* **Provisional Visual Bounds:** Until sprite artwork is implemented, Willy is
+  rendered as an 8x16 rectangle and collectibles as 7x7 rectangles. One-way,
+  collapsible and conveyor tiles use visible heights of 5, 6 and 7 pixels
+  respectively.
 * **Provisional Collision Body:** Until sprite masks are implemented, Willy uses
   a centered 10x16 pixel collision body.
 
@@ -17,7 +26,7 @@
 * **Directional Locking:** Willy can face 'LEFT' or 'RIGHT'.
 
 ## 3. Jumping Mechanics (The Rigid Curve)
-* **The Golden Rule:** Willy **cannot** change his horizontal direction while in the air. 
+* **The Golden Rule:** Willy **cannot** change his horizontal direction while in the air.
   * If jumping from a standstill, he goes straight up and straight down.
   * If jumping while moving right, he follows a fixed parabolic arc to the right and cannot stop or turn left until he touches solid ground.
 * **Jump Duration & Arc:** A standard jump lasts exactly 18 frames (or game ticks)
