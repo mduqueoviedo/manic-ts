@@ -13,6 +13,14 @@ const START_COLUMN = 4;
 const WALL_COLUMN = 5;
 const HORIZONTAL_STEP = 2;
 const FIRST_JUMP_RISE = 4;
+const JUMP_Y_OFFSETS = [
+  -4, -7, -10,
+  -12, -14, -16, -18,
+  -19, -20,
+  -19, -18,
+  -16, -14, -12, -10,
+  -7, -4, 0,
+] as const;
 const START_X = TileMap.ORIGIN_X + START_COLUMN * TileMap.TILE_SIZE;
 const START_Y =
   GROUND_ROW * TileMap.TILE_SIZE - MinerWilly.COLLISION_HEIGHT;
@@ -28,6 +36,11 @@ const RIGHT_INPUT: PlayerInput = {
   isRightPressed: true,
 };
 
+const LEFT_INPUT: PlayerInput = {
+  ...NO_INPUT,
+  isLeftPressed: true,
+};
+
 function createTileMap(rows: Readonly<Record<number, string>> = {}): TileMap {
   const tiles = createEmptyTileRows();
 
@@ -39,17 +52,13 @@ function createTileMap(rows: Readonly<Record<number, string>> = {}): TileMap {
 }
 
 describe('MinerWilly', () => {
-  it('aligns the provisional hitbox with the visible placeholder', () => {
+  it('centers the terrain envelope within the 16-pixel sprite cell', () => {
     const willy = new MinerWilly(START_X, START_Y);
 
-    expect(willy.collisionX).toBe(willy.x);
+    expect(willy.collisionX).toBe(willy.x + 4);
     expect(willy.collisionY).toBe(willy.y);
-    expect(MinerWilly.COLLISION_WIDTH).toBe(
-      MinerWilly.PLACEHOLDER_WIDTH,
-    );
-    expect(MinerWilly.COLLISION_HEIGHT).toBe(
-      MinerWilly.PLACEHOLDER_HEIGHT,
-    );
+    expect(MinerWilly.COLLISION_WIDTH).toBe(10);
+    expect(MinerWilly.COLLISION_HEIGHT).toBe(16);
   });
 
   it('walks by one fixed horizontal step while supported', () => {
@@ -60,6 +69,17 @@ describe('MinerWilly', () => {
 
     expect(willy.x).toBe(START_X + HORIZONTAL_STEP);
     expect(willy.y).toBe(START_Y);
+  });
+
+  it('keeps the wide-leg frame at the full standing height', () => {
+    const tileMap = createTileMap({ [GROUND_ROW]: SOLID_TILE_ROW });
+    const willy = new MinerWilly(START_X, START_Y);
+
+    willy.update(RIGHT_INPUT, tileMap);
+
+    expect(willy.collisionMask.height).toBe(MinerWilly.SPRITE_HEIGHT);
+    expect(willy.collisionMask.rows[0]).not.toBe(0);
+    expect(willy.collisionMask.rows[MinerWilly.SPRITE_HEIGHT - 1]).not.toBe(0);
   });
 
   it('keeps the launch direction throughout a jump', () => {
@@ -78,7 +98,57 @@ describe('MinerWilly', () => {
     willy.update(changeToLeft, tileMap);
 
     expect(willy.x).toBe(START_X + 2 * HORIZONTAL_STEP);
-    expect(willy.y).toBe(START_Y - FIRST_JUMP_RISE);
+    expect(willy.y).toBe(START_Y + JUMP_Y_OFFSETS[1]);
+  });
+
+  it('pairs every horizontal jump step with the complete vertical arc', () => {
+    const tileMap = createTileMap({ [GROUND_ROW]: SOLID_TILE_ROW });
+    const willy = new MinerWilly(START_X, START_Y);
+    const jumpRight: PlayerInput = {
+      ...RIGHT_INPUT,
+      isJumpPressed: true,
+    };
+
+    willy.update(jumpRight, tileMap);
+
+    expect({ x: willy.x, y: willy.y }).toEqual({
+      x: START_X + HORIZONTAL_STEP,
+      y: START_Y - FIRST_JUMP_RISE,
+    });
+
+    for (let frame = 1; frame < JUMP_Y_OFFSETS.length; frame++) {
+      willy.update(NO_INPUT, tileMap);
+
+      expect({ x: willy.x, y: willy.y }).toEqual({
+        x: START_X + (frame + 1) * HORIZONTAL_STEP,
+        y: START_Y + JUMP_Y_OFFSETS[frame],
+      });
+    }
+
+    expect(willy.isGrounded).toBe(true);
+  });
+
+  it('falls vertically after walking off a ledge', () => {
+    const ledgeRow = `${' '.repeat(START_COLUMN)}#`.padEnd(TileMap.COLUMNS);
+    const tileMap = createTileMap({ [GROUND_ROW]: ledgeRow });
+    const ledgeX =
+      TileMap.ORIGIN_X
+      + START_COLUMN * TileMap.TILE_SIZE
+      - 4;
+    const willy = new MinerWilly(ledgeX, START_Y);
+
+    for (let tick = 0; tick < 4; tick++) {
+      willy.update(RIGHT_INPUT, tileMap);
+    }
+
+    expect(willy.isGrounded).toBe(false);
+    const fallX = willy.x;
+
+    willy.update(LEFT_INPUT, tileMap);
+    willy.update(RIGHT_INPUT, tileMap);
+
+    expect(willy.x).toBe(fallX);
+    expect(willy.y).toBe(START_Y + 2 * 4);
   });
 
   it('stops at a solid wall instead of entering it', () => {
@@ -91,7 +161,8 @@ describe('MinerWilly', () => {
     const flushWithWall =
       TileMap.ORIGIN_X
       + WALL_COLUMN * TileMap.TILE_SIZE
-      - MinerWilly.PLACEHOLDER_WIDTH;
+      - MinerWilly.COLLISION_WIDTH
+      - 4;
     const willy = new MinerWilly(flushWithWall, START_Y);
 
     willy.update(RIGHT_INPUT, tileMap);
@@ -99,12 +170,12 @@ describe('MinerWilly', () => {
     expect(willy.x).toBe(flushWithWall);
   });
 
-  it('uses strict rectangle overlap at collision-body edges', () => {
+  it('uses occupied sprite pixels for rectangle overlap', () => {
     const willy = new MinerWilly(START_X, START_Y);
 
     expect(
       willy.overlapsRectangle(
-        willy.collisionX + MinerWilly.COLLISION_WIDTH,
+        willy.x + 11,
         willy.collisionY,
         TileMap.TILE_SIZE,
         TileMap.TILE_SIZE,
@@ -112,7 +183,7 @@ describe('MinerWilly', () => {
     ).toBe(false);
     expect(
       willy.overlapsRectangle(
-        willy.collisionX + MinerWilly.COLLISION_WIDTH - 1,
+        willy.x + 10,
         willy.collisionY,
         TileMap.TILE_SIZE,
         TileMap.TILE_SIZE,

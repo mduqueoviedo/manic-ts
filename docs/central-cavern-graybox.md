@@ -13,8 +13,8 @@ The audit covers:
 - collectible, hazard and exit cells;
 - conveyor extent and direction.
 
-It does not cover final sprites, tile artwork, animation, sprite masks, HUD
-layout or enemy implementation.
+It does not cover final sprite colors, tile artwork, HUD layout or enemy
+implementation.
 
 ## References
 
@@ -61,8 +61,21 @@ and `(12, 12)`.
   restart returns them to their initial state.
 - Collapsible placeholder wear changes color without changing the audited
   six-pixel visual envelope.
+- Willy's four movement silhouettes and all six static-hazard masks were
+  measured from a CPC gameplay capture. Static-hazard contact now compares
+  occupied pixels instead of rectangular envelopes.
+- The raised-block jump below the conveyor hazard is covered by an automated
+  route regression using the exact blue floor, three overhead solid blocks,
+  conveyor and plant rows. Willy remains under the last overhead block long
+  enough to hit it with his head, then falls vertically onto the raised
+  blocks without touching the plant. The conveyor remains traversable from
+  below.
+- A CPC frame-by-frame capture confirms that horizontal jumps apply one
+  2-pixel horizontal step on each of the 18 arc frames. The launch input has
+  no preliminary walking step or stationary transition tick, and the landing
+  frame is not vertical-only.
 - Route completion cannot be signed off until conveyor movement, the Central
-  Cavern enemy and sprite-mask collision are implemented.
+  Cavern enemy and the remaining route checks are implemented.
 
 ## Placeholder dimensions
 
@@ -70,13 +83,14 @@ These dimensions describe visible placeholder bounds, not collision masks.
 
 | Element | Placeholder size |
 | --- | --- |
-| Willy's initial visible frame | 8x16 pixels |
-| Willy's provisional collision body | 8x16 pixels |
+| Willy's sprite cell | 16x16 pixels |
+| Willy's terrain collision envelope | 10x16 pixels, offset 4px into the cell |
 | Collectible | 7x7 pixels |
 | One-way floor | 8x5 pixels |
 | Collapsible floor | 8x6 pixels |
 | Conveyor | 8x7 pixels |
-| Solid and deadly tile envelope | 8x8 pixels |
+| Solid tile envelope | 8x8 pixels |
+| Static-hazard mask cell | 8x8 pixels |
 | Exit | 16x16 pixels |
 
 ## Remaining validation
@@ -86,10 +100,8 @@ These dimensions describe visible placeholder bounds, not collision masks.
 - Check for unintended shortcuts and trapping positions.
 - Confirm the provisional seven-contact collapsible-floor lifetime frame by
   frame against the Amstrad CPC version.
-- Replace rectangular Willy and static-hazard collision with animation-frame
-  masks. The current rectangles make the row-13-to-row-12 jump intersect the
-  hazard at column 21 even though the CPC sprite pixels remain clear.
-- Revisit only traversal-relevant dimensions before sprite masks exist.
+- Extend pixel-mask collision to other sprite interactions when their artwork
+  and frame data become available.
 
 [cpc-power]: https://www.cpc-power.com/index.php?num=1347&page=detail
 [mobygames]: https://www.mobygames.com/game/6440/manic-miner/screenshots/cpc/441969/

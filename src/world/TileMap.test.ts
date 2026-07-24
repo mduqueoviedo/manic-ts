@@ -4,6 +4,7 @@ import {
   createTestLevel,
   SOLID_TILE_ROW,
 } from '../test/levelFixtures';
+import { definePixelMask } from '../collision/PixelMask';
 import { TILE_TYPES, TileMap } from './TileMap';
 
 const LEVEL_NAME = 'Tile map test';
@@ -70,6 +71,8 @@ describe('TileMap', () => {
 
     expect(tileMap.isSolidTile(TILE_TYPES.SOLID)).toBe(true);
     expect(tileMap.isSolidTile(TILE_TYPES.ONE_WAY)).toBe(false);
+    expect(tileMap.isSolidTile(TILE_TYPES.CONVEYOR_LEFT)).toBe(false);
+    expect(tileMap.isSolidTile(TILE_TYPES.CONVEYOR_RIGHT)).toBe(false);
 
     for (const tile of [
       TILE_TYPES.SOLID,
@@ -86,16 +89,21 @@ describe('TileMap', () => {
     expect(tileMap.isSupportTile(undefined)).toBe(false);
   });
 
-  it('detects deadly overlap without treating touching edges as overlap', () => {
+  it('detects occupied deadly pixels without hitting transparent pixels', () => {
     const rows = createEmptyTileRows();
     rows[2] = '  !'.padEnd(TileMap.COLUMNS);
     const tileMap = new TileMap(createTestLevel({ tiles: rows }));
     const hazardX = TileMap.ORIGIN_X + 2 * TileMap.TILE_SIZE;
     const hazardY = 2 * TileMap.TILE_SIZE;
+    const pixel = definePixelMask(['#']);
 
-    expect(tileMap.overlapsDeadlyTile(hazardX, hazardY, 1, 1)).toBe(true);
-    expect(tileMap.overlapsDeadlyTile(hazardX - 1, hazardY, 1, 1)).toBe(false);
-    expect(tileMap.overlapsDeadlyTile(hazardX, hazardY - 1, 1, 1)).toBe(false);
+    expect(
+      tileMap.overlapsDeadlyTile(hazardX + 1, hazardY + 3, pixel),
+    ).toBe(true);
+    expect(tileMap.overlapsDeadlyTile(hazardX, hazardY, pixel)).toBe(false);
+    expect(
+      tileMap.overlapsDeadlyTile(hazardX, hazardY + 3, pixel),
+    ).toBe(false);
   });
 
   it('wears collapsible tiles cumulatively until each touched cell disappears', () => {

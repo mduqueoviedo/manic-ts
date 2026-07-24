@@ -1,9 +1,16 @@
 import {
   LEVEL_COLUMNS,
   LEVEL_ROWS,
+  type DeadlyMaskDefinition,
   type LevelDefinition,
 } from '../levels/LevelDefinition';
 import { CANVAS_WIDTH } from '../core/GameConfig';
+import {
+  definePixelMask,
+  masksOverlap,
+  renderPixelMask,
+  type PixelMask,
+} from '../collision/PixelMask';
 
 // Define the type of tiles available in the cavern
 export const TILE_TYPES = {
@@ -20,11 +27,19 @@ export type TileType = typeof TILE_TYPES[keyof typeof TILE_TYPES];
 
 const TILE_SIZE = 8;
 const LAST_PIXEL_OFFSET = 1;
-// With the provisional 8px collision body, a fixed-speed walking pass overlaps
-// each tile for seven simulation ticks. Consuming the tile in those seven
-// contacts preserves the observed CPC traversal rule: crossing without jumping
-// leaves no floor for a second pass.
+// Seven support contacts preserve the observed CPC traversal rule: crossing a
+// tile without jumping leaves no floor for a second pass.
 const COLLAPSIBLE_LIFETIME_TICKS = 7;
+const DEADLY_MASK = definePixelMask([
+  '.#...#..',
+  '..###...',
+  '#....#..',
+  '.#.....#',
+  '..###..#',
+  '#.#.###.',
+  '...#....',
+  '........',
+]);
 
 const TILE_BY_SYMBOL: Readonly<Record<string, TileType>> = {
   ' ': TILE_TYPES.EMPTY,
@@ -88,9 +103,11 @@ export class TileMap {
 
   private readonly grid: TileType[][];
   private readonly collapsibleWear: number[][];
+  private readonly deadlyMasks: ReadonlyMap<string, PixelMask>;
 
   constructor(private readonly level: LevelDefinition) {
     this.grid = this.createGrid(level.tiles);
+    this.deadlyMasks = this.createDeadlyMasks(level.deadlyMasks ?? []);
     this.collapsibleWear = Array.from(
       { length: TileMap.ROWS },
       () => Array<number>(TileMap.COLUMNS).fill(0),
@@ -174,16 +191,15 @@ export class TileMap {
   }
 
   /**
-   * Checks every tile touched by a pixel rectangle for a deadly tile.
+   * Checks a sprite mask against every nearby deadly tile mask.
    */
   public overlapsDeadlyTile(
     x: number,
     y: number,
-    width: number,
-    height: number,
+    mask: PixelMask,
   ): boolean {
-    const lastX = x + width - LAST_PIXEL_OFFSET;
-    const lastY = y + height - LAST_PIXEL_OFFSET;
+    const lastX = x + mask.width - LAST_PIXEL_OFFSET;
+    const lastY = y + mask.height - LAST_PIXEL_OFFSET;
     const firstColumn = Math.floor((x - TileMap.ORIGIN_X) / TileMap.TILE_SIZE);
     const lastColumn = Math.floor(
       (lastX - TileMap.ORIGIN_X) / TileMap.TILE_SIZE,
@@ -196,7 +212,13 @@ export class TileMap {
     for (let row = firstRow; row <= lastRow; row++) {
       for (let column = firstColumn; column <= lastColumn; column++) {
         if (this.getTileAtGrid(column, row) === TILE_TYPES.DEADLY) {
-          return true;
+          const tileX = TileMap.ORIGIN_X + column * TileMap.TILE_SIZE;
+          const tileY = TileMap.ORIGIN_Y + row * TileMap.TILE_SIZE;
+          const deadlyMask = this.getDeadlyMask(column, row);
+
+          if (masksOverlap(mask, x, y, deadlyMask, tileX, tileY)) {
+            return true;
+          }
         }
       }
     }
@@ -245,12 +267,14 @@ export class TileMap {
         if (tile === TILE_TYPES.EMPTY) continue;
 
         ctx.fillStyle = this.getRenderedTileColor(tile, col, row);
-        ctx.fillRect(
-          TileMap.ORIGIN_X + col * size,
-          TileMap.ORIGIN_Y + row * size,
-          size,
-          TILE_HEIGHT_BY_TYPE[tile],
-        );
+        const x = TileMap.ORIGIN_X + col * size;
+        const y = TileMap.ORIGIN_Y + row * size;
+
+        if (tile === TILE_TYPES.DEADLY) {
+          renderPixelMask(ctx, this.getDeadlyMask(col, row), x, y);
+        } else {
+          ctx.fillRect(x, y, size, TILE_HEIGHT_BY_TYPE[tile]);
+        }
       }
     }
   }
@@ -265,5 +289,53 @@ export class TileMap {
     }
 
     return COLLAPSIBLE_WEAR_COLORS[this.collapsibleWear[row][column]];
+  }
+
+  private getDeadlyMask(column: number, row: number): PixelMask {
+    return this.deadlyMasks.get(this.getDeadlyMaskKey(column, row))
+      ?? DEADLY_MASK;
+  }
+
+  private getDeadlyMaskKey(column: number, row: number): string {
+    return `${column},${row}`;
+  }
+
+  private createDeadlyMasks(
+    definitions: readonly DeadlyMaskDefinition[],
+  ): ReadonlyMap<string, PixelMask> {
+    const masks = new Map<string, PixelMask>();
+
+    for (const definition of definitions) {
+      if (
+        this.getTileAtGrid(definition.column, definition.row)
+        !== TILE_TYPES.DEADLY
+      ) {
+        throw new Error(
+          `Deadly mask at ${definition.column},${definition.row}`
+          + ` in level "${this.level.name}" must target a deadly tile.`,
+        );
+      }
+
+      const key = this.getDeadlyMaskKey(definition.column, definition.row);
+
+      if (masks.has(key)) {
+        throw new Error(
+          `Duplicate deadly mask at ${key} in level "${this.level.name}".`,
+        );
+      }
+
+      const mask = definePixelMask(definition.pixels);
+
+      if (mask.width !== TILE_SIZE || mask.height !== TILE_SIZE) {
+        throw new Error(
+          `Deadly mask at ${key} in level "${this.level.name}"`
+          + ` must be ${TILE_SIZE}x${TILE_SIZE} pixels.`,
+        );
+      }
+
+      masks.set(key, mask);
+    }
+
+    return masks;
   }
 }
