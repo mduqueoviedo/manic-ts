@@ -20,6 +20,11 @@ export type TileType = typeof TILE_TYPES[keyof typeof TILE_TYPES];
 
 const TILE_SIZE = 8;
 const LAST_PIXEL_OFFSET = 1;
+// With the provisional 8px collision body, a fixed-speed walking pass overlaps
+// each tile for seven simulation ticks. Consuming the tile in those seven
+// contacts preserves the observed CPC traversal rule: crossing without jumping
+// leaves no floor for a second pass.
+const COLLAPSIBLE_LIFETIME_TICKS = 7;
 
 const TILE_BY_SYMBOL: Readonly<Record<string, TileType>> = {
   ' ': TILE_TYPES.EMPTY,
@@ -41,6 +46,16 @@ const TILE_COLORS: Readonly<Record<TileType, string>> = {
   [TILE_TYPES.CONVEYOR_RIGHT]: '#ff00ff',
 };
 
+const COLLAPSIBLE_WEAR_COLORS: readonly string[] = [
+  '#ffff00',
+  '#dddd00',
+  '#bbbb00',
+  '#999900',
+  '#777700',
+  '#555500',
+  '#333300',
+];
+
 const TILE_HEIGHT_BY_TYPE: Readonly<Record<TileType, number>> = {
   [TILE_TYPES.EMPTY]: 0,
   [TILE_TYPES.SOLID]: TILE_SIZE,
@@ -61,6 +76,8 @@ const SUPPORT_TILE_TYPES: ReadonlySet<TileType> = new Set([
 
 export class TileMap {
   public static readonly TILE_SIZE = TILE_SIZE;
+  public static readonly COLLAPSIBLE_LIFETIME_TICKS =
+    COLLAPSIBLE_LIFETIME_TICKS;
   public static readonly COLUMNS = LEVEL_COLUMNS;
   public static readonly ROWS = LEVEL_ROWS;
   public static readonly WIDTH = TileMap.COLUMNS * TileMap.TILE_SIZE;
@@ -70,9 +87,14 @@ export class TileMap {
   public static readonly RIGHT = TileMap.ORIGIN_X + TileMap.WIDTH;
 
   private readonly grid: TileType[][];
+  private readonly collapsibleWear: number[][];
 
   constructor(private readonly level: LevelDefinition) {
     this.grid = this.createGrid(level.tiles);
+    this.collapsibleWear = Array.from(
+      { length: TileMap.ROWS },
+      () => Array<number>(TileMap.COLUMNS).fill(0),
+    );
   }
 
   /**
@@ -115,6 +137,40 @@ export class TileMap {
    */
   public isSupportTile(tile: TileType | undefined): boolean {
     return tile !== undefined && SUPPORT_TILE_TYPES.has(tile);
+  }
+
+  /**
+   * Advances every collapsible cell directly below Willy's collision body.
+   * Wear is cumulative and each cell disappears independently.
+   */
+  public wearCollapsibleTilesBelow(
+    x: number,
+    width: number,
+    feetY: number,
+  ): void {
+    const firstColumn = Math.floor(
+      (x - TileMap.ORIGIN_X) / TileMap.TILE_SIZE,
+    );
+    const lastColumn = Math.floor(
+      (x + width - LAST_PIXEL_OFFSET - TileMap.ORIGIN_X)
+        / TileMap.TILE_SIZE,
+    );
+    const row = Math.floor(
+      (feetY - TileMap.ORIGIN_Y) / TileMap.TILE_SIZE,
+    );
+
+    for (let column = firstColumn; column <= lastColumn; column++) {
+      if (this.getTileAtGrid(column, row) !== TILE_TYPES.COLLAPSIBLE) {
+        continue;
+      }
+
+      const nextWear = this.collapsibleWear[row][column] + 1;
+      this.collapsibleWear[row][column] = nextWear;
+
+      if (nextWear >= TileMap.COLLAPSIBLE_LIFETIME_TICKS) {
+        this.grid[row][column] = TILE_TYPES.EMPTY;
+      }
+    }
   }
 
   /**
@@ -188,7 +244,7 @@ export class TileMap {
 
         if (tile === TILE_TYPES.EMPTY) continue;
 
-        ctx.fillStyle = TILE_COLORS[tile];
+        ctx.fillStyle = this.getRenderedTileColor(tile, col, row);
         ctx.fillRect(
           TileMap.ORIGIN_X + col * size,
           TileMap.ORIGIN_Y + row * size,
@@ -197,5 +253,17 @@ export class TileMap {
         );
       }
     }
+  }
+
+  private getRenderedTileColor(
+    tile: TileType,
+    column: number,
+    row: number,
+  ): string {
+    if (tile !== TILE_TYPES.COLLAPSIBLE) {
+      return TILE_COLORS[tile];
+    }
+
+    return COLLAPSIBLE_WEAR_COLORS[this.collapsibleWear[row][column]];
   }
 }

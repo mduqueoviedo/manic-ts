@@ -74,6 +74,13 @@ export class GameSession {
     }
 
     this.willy.update(input, this.tileMap);
+    if (this.willy.isGrounded) {
+      this.tileMap.wearCollapsibleTilesBelow(
+        this.willy.collisionX,
+        MinerWilly.COLLISION_WIDTH,
+        this.willy.collisionY + MinerWilly.COLLISION_HEIGHT,
+      );
+    }
 
     if (
       this.tileMap.overlapsDeadlyTile(

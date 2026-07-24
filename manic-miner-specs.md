@@ -51,8 +51,18 @@
 * **One-Way Platforms:** Can be crossed from below and from either side. Willy
   lands on their top surface only while descending, when his feet cross the
   platform between the previous and current game tick.
-* **Collapsible Tiles (Crumbling Floors):** When Willy stands on them, their visual state changes, and they disappear completely after a fixed number of frames, turning into 'EMPTY' space.
-* **Deadly Tiles:** Any intersection with spikes or environmental hazards triggers the death sequence immediately.
+* **Collapsible Tiles (Crumbling Floors):** Each tile accumulates one wear step
+  per simulation tick while Willy stands on it. Wear does not recover when he
+  moves away. The tile progressively loses visible height and disappears after
+  seven accumulated ticks, turning into `EMPTY` space. With the provisional
+  8-pixel collision body, this makes one uninterrupted walking pass consume a
+  tile completely, matching observed Amstrad CPC traversal. The Spectrum's
+  [documented eight-frame behavior][zx-spectrum-tas] uses a different
+  cell-contact model, so the exact CPC timing remains subject to frame-by-frame
+  confirmation.
+* **Deadly Tiles:** Any intersection with spikes or environmental hazards
+  triggers the death sequence immediately. Static hazards will require
+  pixel-mask collision once their sprites are available.
 * **Conveyor Tiles:** A conveyor supports Willy from above and moves him in its
   defined horizontal direction.
   * Once Willy is walking on a conveyor, its direction takes control. Opposite
@@ -89,3 +99,5 @@
 * **Browser Loop:** Rendering uses `requestAnimationFrame`, while game logic is
   advanced through a fixed 12.5 Hz accumulator so movement does not depend on
   the display refresh rate.
+
+[zx-spectrum-tas]: https://tasvideos.org/7913S

@@ -67,6 +67,10 @@ export class MinerWilly {
     private jumpFrame: number = MinerWilly.JUMP_START_FRAME;
     private jumpDirection: 'NONE' | 'LEFT' | 'RIGHT' = 'NONE';
 
+    public get isGrounded(): boolean {
+        return !this.isJumping && !this.isFalling;
+    }
+
     // Constant lookup array for vertical movement per frame during a jump.
     // It preserves an 18-frame, 20-pixel arc without pausing at the apex.
     private static readonly JUMP_OFFSET_TABLE: readonly number[] = [
@@ -90,6 +94,10 @@ export class MinerWilly {
     public update(input: PlayerInput, tileMap: TileMap): void {
         this.previousX = this.x;
         this.previousY = this.y;
+
+        if (!this.isJumping && !this.isFalling && !this.hasSupport(tileMap)) {
+            this.isFalling = true;
+        }
 
         if (this.isFalling) {
             this.handleFreeFall(tileMap);

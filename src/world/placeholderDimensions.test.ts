@@ -14,18 +14,22 @@ interface FillRectCall {
 function createRecordingContext(): {
   readonly ctx: CanvasRenderingContext2D;
   readonly fillRectCalls: FillRectCall[];
+  readonly fillStyles: string[];
 } {
   const fillRectCalls: FillRectCall[] = [];
-  const ctx = {
+  const fillStyles: string[] = [];
+  const recordingContext = {
     fillStyle: '',
     strokeStyle: '',
     fillRect(x: number, y: number, width: number, height: number): void {
       fillRectCalls.push({ x, y, width, height });
+      fillStyles.push(recordingContext.fillStyle);
     },
     strokeRect(): void {},
-  } as unknown as CanvasRenderingContext2D;
+  };
+  const ctx = recordingContext as unknown as CanvasRenderingContext2D;
 
-  return { ctx, fillRectCalls };
+  return { ctx, fillRectCalls, fillStyles };
 }
 
 describe('CPC-sized visual placeholders', () => {
@@ -96,5 +100,35 @@ describe('CPC-sized visual placeholders', () => {
       width: 8,
       height: 8,
     });
+  });
+
+  it('shows first-contact damage without changing platform height', () => {
+    const { ctx, fillRectCalls, fillStyles } = createRecordingContext();
+    const tileMap = new TileMap(centralCavern);
+    const tileX = TileMap.ORIGIN_X + 14 * TileMap.TILE_SIZE;
+    const tileY = TileMap.ORIGIN_Y + 5 * TileMap.TILE_SIZE;
+
+    tileMap.wearCollapsibleTilesBelow(
+      tileX,
+      TileMap.TILE_SIZE,
+      tileY,
+    );
+    tileMap.render(ctx);
+
+    const tileCall = {
+      x: tileX,
+      y: tileY,
+      width: 8,
+      height: 6,
+    };
+    const tileCallIndex = fillRectCalls.findIndex(
+      (call) => call.x === tileCall.x
+        && call.y === tileCall.y
+        && call.width === tileCall.width
+        && call.height === tileCall.height,
+    );
+
+    expect(tileCallIndex).toBeGreaterThanOrEqual(0);
+    expect(fillStyles[tileCallIndex]).toBe('#dddd00');
   });
 });
