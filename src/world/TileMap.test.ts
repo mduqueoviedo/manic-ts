@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createEmptyTileRows,
   createTestLevel,
+  SOLID_TILE_ROW,
 } from '../test/levelFixtures';
 import { TILE_TYPES, TileMap } from './TileMap';
 
@@ -95,6 +96,70 @@ describe('TileMap', () => {
     expect(tileMap.overlapsDeadlyTile(hazardX, hazardY, 1, 1)).toBe(true);
     expect(tileMap.overlapsDeadlyTile(hazardX - 1, hazardY, 1, 1)).toBe(false);
     expect(tileMap.overlapsDeadlyTile(hazardX, hazardY - 1, 1, 1)).toBe(false);
+  });
+
+  it('wears collapsible tiles cumulatively until each touched cell disappears', () => {
+    const rows = createEmptyTileRows();
+    rows[3] = '  xx'.padEnd(TileMap.COLUMNS);
+    const tileMap = new TileMap(createTestLevel({ tiles: rows }));
+    const firstTileX = TileMap.ORIGIN_X + 2 * TileMap.TILE_SIZE;
+    const secondTileX = firstTileX + TileMap.TILE_SIZE;
+    const tileY = 3 * TileMap.TILE_SIZE;
+
+    for (
+      let tick = 0;
+      tick < TileMap.COLLAPSIBLE_LIFETIME_TICKS - 1;
+      tick++
+    ) {
+      tileMap.wearCollapsibleTilesBelow(
+        firstTileX,
+        TileMap.TILE_SIZE,
+        tileY,
+      );
+    }
+
+    expect(tileMap.getTileAtPixel(firstTileX, tileY)).toBe(
+      TILE_TYPES.COLLAPSIBLE,
+    );
+    expect(tileMap.getTileAtPixel(secondTileX, tileY)).toBe(
+      TILE_TYPES.COLLAPSIBLE,
+    );
+
+    tileMap.wearCollapsibleTilesBelow(
+      firstTileX,
+      2 * TileMap.TILE_SIZE,
+      tileY,
+    );
+
+    expect(tileMap.getTileAtPixel(firstTileX, tileY)).toBe(TILE_TYPES.EMPTY);
+    expect(tileMap.getTileAtPixel(secondTileX, tileY)).toBe(
+      TILE_TYPES.COLLAPSIBLE,
+    );
+  });
+
+  it('fully removes a collapsible tile during one uninterrupted walking pass', () => {
+    const rows = createEmptyTileRows();
+    rows[3] = '   #x#'.padEnd(TileMap.COLUMNS);
+    const tileMap = new TileMap(createTestLevel({ tiles: rows }));
+    const tileX = TileMap.ORIGIN_X + 4 * TileMap.TILE_SIZE;
+    const tileY = 3 * TileMap.TILE_SIZE;
+    const startX = tileX - TileMap.TILE_SIZE;
+    const endX = tileX + TileMap.TILE_SIZE;
+    const walkingStep = 2;
+
+    for (
+      let willyX = startX + walkingStep;
+      willyX <= endX;
+      willyX += walkingStep
+    ) {
+      tileMap.wearCollapsibleTilesBelow(
+        willyX,
+        TileMap.TILE_SIZE,
+        tileY,
+      );
+    }
+
+    expect(tileMap.getTileAtPixel(tileX, tileY)).toBe(TILE_TYPES.EMPTY);
   });
 
   it('rejects malformed level grids with useful errors', () => {

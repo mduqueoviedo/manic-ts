@@ -56,8 +56,13 @@ and `(12, 12)`.
   direction explicitly.
 - The visual placeholders now use audited bounding boxes even though they
   remain flat colored rectangles.
-- Route completion cannot be signed off until collapsible floors, conveyor
-  movement and the Central Cavern enemy are implemented.
+- Collapsible tiles now degrade independently over seven accumulated support
+  ticks. One uninterrupted walking pass removes them completely, and a life
+  restart returns them to their initial state.
+- Collapsible placeholder wear changes color without changing the audited
+  six-pixel visual envelope.
+- Route completion cannot be signed off until conveyor movement, the Central
+  Cavern enemy and sprite-mask collision are implemented.
 
 ## Placeholder dimensions
 
@@ -79,6 +84,11 @@ These dimensions describe visible placeholder bounds, not collision masks.
 - Verify static jumps and landings with the provisional collision body.
 - Record the intended collectible route as mechanics become available.
 - Check for unintended shortcuts and trapping positions.
+- Confirm the provisional seven-contact collapsible-floor lifetime frame by
+  frame against the Amstrad CPC version.
+- Replace rectangular Willy and static-hazard collision with animation-frame
+  masks. The current rectangles make the row-13-to-row-12 jump intersect the
+  hazard at column 21 even though the CPC sprite pixels remain clear.
 - Revisit only traversal-relevant dimensions before sprite masks exist.
 
 [cpc-power]: https://www.cpc-power.com/index.php?num=1347&page=detail

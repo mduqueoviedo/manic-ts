@@ -58,9 +58,9 @@ known inaccuracies are visual rather than structural.
 
 ## Milestone 2: Dynamic terrain
 
-- [ ] Make collapsible floors react while Willy stands on them.
-- [ ] Add their visual degradation states and eventual disappearance.
-- [ ] Restore all collapsible floors after losing a life.
+- [x] Make collapsible floors react while Willy stands on them.
+- [x] Add their visual degradation states and eventual disappearance.
+- [x] Restore all collapsible floors after losing a life.
 - [ ] Implement conveyor direction and horizontal movement.
 - [ ] Implement conveyor direction locking while Willy remains grounded.
 - [ ] Implement the immediate opposite-jump exception when landing against a

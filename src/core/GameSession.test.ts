@@ -8,6 +8,7 @@ import {
 } from '../test/levelFixtures';
 import type { PlayerInput } from './InputHandler';
 import { GameSession } from './GameSession';
+import { TileMap } from '../world/TileMap';
 
 const MAX_TICKS_UNTIL_DEATH = 10;
 const TICKS_UNTIL_HAZARD_EDGE_CONTACT = 4;
@@ -37,6 +38,31 @@ function createLevel(): LevelDefinition {
       { type: 'COLLECTIBLE', column: 0, row: 1 },
       { type: 'EXIT', column: 28, row: 1 },
     ],
+  });
+}
+
+function createCollapsibleLevel(): LevelDefinition {
+  const tiles = createEmptyTileRows();
+  tiles[1] = '  !'.padEnd(EMPTY_TILE_ROW.length);
+  tiles[3] = 'xxx'.padEnd(EMPTY_TILE_ROW.length);
+  tiles[15] = SOLID_TILE_ROW;
+
+  return createTestLevel({
+    name: 'Collapsible floor test',
+    spawn: { x: 0, y: 8 },
+    tiles,
+  });
+}
+
+function createFloorHazardLevel(): LevelDefinition {
+  const tiles = createEmptyTileRows();
+  tiles[2] = '  !'.padEnd(EMPTY_TILE_ROW.length);
+  tiles[3] = SOLID_TILE_ROW;
+
+  return createTestLevel({
+    name: 'Floor hazard test',
+    spawn: { x: 2 * TileMap.TILE_SIZE, y: 8 },
+    tiles,
   });
 }
 
@@ -96,6 +122,14 @@ describe('GameSession', () => {
     expect(session.livesRemaining).toBe(2);
   });
 
+  it('keeps a floor hazard lethal during ordinary contact', () => {
+    const session = new GameSession(createFloorHazardLevel());
+
+    session.update(NO_INPUT);
+
+    expect(session.livesRemaining).toBe(2);
+  });
+
   it('stops updating after the final life is lost', () => {
     const session = new GameSession(createLevel(), 1);
 
@@ -127,4 +161,32 @@ describe('GameSession', () => {
     expect(session.remainingCollectibles).toBe(1);
     expect(session.isGameOver).toBe(false);
   });
+
+  it('restores collapsible floors after losing a life', () => {
+    const session = new GameSession(createCollapsibleLevel());
+    const spawn = session.playerPosition;
+
+    for (let tick = 0; tick < 3; tick++) {
+      session.update(NO_INPUT);
+    }
+    moveIntoHazard(session);
+
+    expect(session.livesRemaining).toBe(2);
+    expect(session.playerPosition).toEqual(spawn);
+
+    for (
+      let tick = 0;
+      tick < TileMap.COLLAPSIBLE_LIFETIME_TICKS;
+      tick++
+    ) {
+      session.update(NO_INPUT);
+    }
+
+    expect(session.playerPosition).toEqual(spawn);
+
+    session.update(NO_INPUT);
+
+    expect(session.playerPosition.y).toBe(spawn.y + 4);
+  });
+
 });
