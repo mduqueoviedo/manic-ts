@@ -34,6 +34,16 @@ describe('Central Cavern graybox', () => {
       { type: 'COLLECTIBLE', column: 30, row: 6 },
       { type: 'EXIT', column: 29, row: 13 },
     ]);
+    expect(
+      centralCavern.deadlyMasks.map(({ column, row }) => ({ column, row })),
+    ).toEqual([
+      { column: 11, row: 0 },
+      { column: 16, row: 0 },
+      { column: 23, row: 4 },
+      { column: 27, row: 4 },
+      { column: 21, row: 8 },
+      { column: 12, row: 12 },
+    ]);
   });
 
   it('identifies the Central Cavern conveyor as moving left', () => {

@@ -32,16 +32,31 @@ function createRecordingContext(): {
   return { ctx, fillRectCalls, fillStyles };
 }
 
-describe('CPC-sized visual placeholders', () => {
-  it('renders Willy with the visible bounds of his initial frame', () => {
+describe('CPC-sized visuals', () => {
+  it('renders the occupied pixels of Willy\'s initial mask', () => {
     const { ctx, fillRectCalls } = createRecordingContext();
     const willy = new MinerWilly(16, 104);
 
     willy.render(ctx, 0);
 
-    expect(fillRectCalls).toEqual([
-      { x: 16, y: 104, width: 8, height: 16 },
-    ]);
+    expect(fillRectCalls).toContainEqual({
+      x: 25,
+      y: 104,
+      width: 1,
+      height: 1,
+    });
+    expect(fillRectCalls).toContainEqual({
+      x: 25,
+      y: 118,
+      width: 1,
+      height: 1,
+    });
+    expect(fillRectCalls).not.toContainEqual({
+      x: 16,
+      y: 104,
+      width: 1,
+      height: 1,
+    });
   });
 
   it('renders collectibles with their audited visual bounds', () => {
@@ -94,11 +109,19 @@ describe('CPC-sized visual placeholders', () => {
       width: 8,
       height: 5,
     });
+    const hazardX = TileMap.ORIGIN_X + 11 * TileMap.TILE_SIZE;
+
     expect(fillRectCalls).toContainEqual({
-      x: TileMap.ORIGIN_X + 11 * TileMap.TILE_SIZE,
-      y: TileMap.ORIGIN_Y,
-      width: 8,
-      height: 8,
+      x: hazardX + 1,
+      y: TileMap.ORIGIN_Y + 3,
+      width: 1,
+      height: 1,
+    });
+    expect(fillRectCalls).not.toContainEqual({
+      x: hazardX + 7,
+      y: TileMap.ORIGIN_Y + 7,
+      width: 1,
+      height: 1,
     });
   });
 

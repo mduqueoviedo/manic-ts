@@ -11,7 +11,7 @@ import { GameSession } from './GameSession';
 import { TileMap } from '../world/TileMap';
 
 const MAX_TICKS_UNTIL_DEATH = 10;
-const TICKS_UNTIL_HAZARD_EDGE_CONTACT = 4;
+const TICKS_UNTIL_HAZARD_GUARD_CONTACT = 2;
 
 const NO_INPUT: PlayerInput = {
   isLeftPressed: false,
@@ -66,6 +66,40 @@ function createFloorHazardLevel(): LevelDefinition {
   });
 }
 
+function createOverheadHazardJumpLevel(): LevelDefinition {
+  const tiles = createEmptyTileRows();
+  tiles[8] = `${' '.repeat(17)}### !`.padEnd(EMPTY_TILE_ROW.length);
+  tiles[9] = `${' '.repeat(8)}${'<'.repeat(20)}`.padEnd(
+    EMPTY_TILE_ROW.length,
+  );
+  tiles[12] = `${' '.repeat(20)}###`.padEnd(EMPTY_TILE_ROW.length);
+  tiles[13] = `${' '.repeat(5)}---------------`.padEnd(
+    EMPTY_TILE_ROW.length,
+  );
+  tiles[15] = SOLID_TILE_ROW;
+
+  return createTestLevel({
+    name: 'Overhead hazard jump test',
+    spawn: { x: 16 * TileMap.TILE_SIZE, y: 88 },
+    tiles,
+  });
+}
+
+function createHazardGapLevel(): LevelDefinition {
+  const tiles = createEmptyTileRows();
+  tiles[8] = `${' '.repeat(17)}### !`.padEnd(EMPTY_TILE_ROW.length);
+  tiles[9] = `${' '.repeat(8)}${'<'.repeat(20)}`.padEnd(
+    EMPTY_TILE_ROW.length,
+  );
+  tiles[15] = SOLID_TILE_ROW;
+
+  return createTestLevel({
+    name: 'Hazard gap test',
+    spawn: { x: 18 * TileMap.TILE_SIZE, y: 48 },
+    tiles,
+  });
+}
+
 function moveIntoHazard(session: GameSession): void {
   const livesBeforeHazard = session.livesRemaining;
 
@@ -108,10 +142,10 @@ describe('GameSession', () => {
     expect(session.isGameOver).toBe(false);
   });
 
-  it('does not kill Willy before his visible body enters a hazard', () => {
+  it('does not kill Willy before his guarded mask reaches a hazard', () => {
     const session = new GameSession(createLevel());
 
-    for (let tick = 0; tick < TICKS_UNTIL_HAZARD_EDGE_CONTACT; tick++) {
+    for (let tick = 0; tick < TICKS_UNTIL_HAZARD_GUARD_CONTACT; tick++) {
       session.update(RIGHT_INPUT);
     }
 
@@ -124,6 +158,65 @@ describe('GameSession', () => {
 
   it('keeps a floor hazard lethal during ordinary contact', () => {
     const session = new GameSession(createFloorHazardLevel());
+
+    session.update(NO_INPUT);
+
+    expect(session.livesRemaining).toBe(2);
+  });
+
+  it.each([
+    ['from the preceding platform', 0],
+    ['while pressed against the raised blocks', 12],
+  ])(
+    'can jump onto the raised blocks %s without touching the hazard',
+    (_description, approachTicks) => {
+      const session = new GameSession(createOverheadHazardJumpLevel());
+      const jumpRight: PlayerInput = {
+        ...RIGHT_INPUT,
+        isJumpPressed: true,
+      };
+
+      for (let tick = 0; tick < approachTicks; tick++) {
+        session.update(RIGHT_INPUT);
+      }
+
+      if (approachTicks > 0) {
+        expect(session.playerPosition).toEqual({
+          x: TileMap.ORIGIN_X + 146,
+          y: 88,
+        });
+      }
+
+      session.update(jumpRight);
+
+      for (let tick = 0; tick < 17; tick++) {
+        session.update(RIGHT_INPUT);
+
+        if (approachTicks > 0 && tick === 7) {
+          expect(session.playerPosition).toEqual({
+            x: TileMap.ORIGIN_X + 154,
+            y: 80,
+          });
+        }
+      }
+
+      expect(session.livesRemaining).toBe(3);
+    },
+  );
+
+  it('falls vertically into the conveyor hazard instead of fitting in the gap', () => {
+    const session = new GameSession(createHazardGapLevel());
+
+    for (let tick = 0; tick < 6; tick++) {
+      session.update(RIGHT_INPUT);
+    }
+
+    const fallX = session.playerPosition.x;
+    expect(session.livesRemaining).toBe(3);
+
+    session.update(NO_INPUT);
+
+    expect(session.playerPosition.x).toBe(fallX);
 
     session.update(NO_INPUT);
 

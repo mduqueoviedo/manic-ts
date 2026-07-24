@@ -84,10 +84,9 @@ export class GameSession {
 
     if (
       this.tileMap.overlapsDeadlyTile(
-        this.willy.collisionX,
-        this.willy.collisionY,
-        MinerWilly.COLLISION_WIDTH,
-        MinerWilly.COLLISION_HEIGHT,
+        this.willy.x,
+        this.willy.y,
+        this.willy.deadlyCollisionMask,
       )
     ) {
       this.loseLife();

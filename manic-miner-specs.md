@@ -14,17 +14,23 @@
 * **Sprite Frame:** Miner Willy's animation frames occupy a 16x16 pixel cell,
   but his visible body is taller than it is wide and does not fill the entire
   frame.
-* **Provisional Visual Bounds:** Until sprite artwork is implemented, Willy is
-  rendered as an 8x16 rectangle and collectibles as 7x7 rectangles. One-way,
-  collapsible and conveyor tiles use visible heights of 5, 6 and 7 pixels
-  respectively.
-* **Provisional Collision Body:** Until sprite masks are implemented, Willy's
-  8x16 pixel collision body matches the visible placeholder exactly. Invisible
-  pixels must not collide with terrain or hazards.
+* **Provisional Visual Bounds:** Willy is rendered from the monochrome pixels
+  of his four CPC movement masks, without final sprite colors. Collectibles
+  remain 7x7 rectangles. One-way, collapsible and conveyor tiles use visible
+  heights of 5, 6 and 7 pixels respectively.
+* **Collision Geometry:** Willy keeps a provisional 10x16 terrain envelope,
+  aligned four pixels from the left edge of his sprite cell. This preserves
+  the measured clearance between his visible silhouette and raised solid
+  blocks. Static-hazard and level-object overlap uses the occupied pixels of
+  his current 16x16 movement mask. Static-hazard collision adds a one-pixel
+  horizontal guard to the captured silhouette.
 
 ## 2. Movement Mechanics (Miner Willy)
 * **Horizontal Speed:** Fixed speed. Willy moves exactly 2 pixels per frame horizontally. No inertia, no acceleration, no deceleration.
 * **Directional Locking:** Willy can face 'LEFT' or 'RIGHT'.
+* **Walking Off Ledges:** Leaving a ledge starts a strictly vertical fall.
+  Horizontal input and the previous walking direction are ignored until Willy
+  lands.
 
 ## 3. Jumping Mechanics (The Rigid Curve)
 * **The Golden Rule:** Willy **cannot** change his horizontal direction while in the air.
@@ -32,6 +38,10 @@
   * If jumping while moving right, he follows a fixed parabolic arc to the right and cannot stop or turn left until he touches solid ground.
 * **Jump Duration & Arc:** A standard jump lasts exactly 18 frames (or game ticks)
   and rises 20 pixels above its starting position.
+  * The launch input applies the first arc frame immediately; it does not add
+    a preliminary walking step or a stationary transition tick.
+  * A horizontal jump advances 2 pixels on every arc frame, including the
+    landing frame, for a total horizontal distance of 36 pixels.
   * First 9 frames: Upward vertical movement. The upward speed decreases at fixed steps every few frames.
   * Remaining 9 frames: Downward vertical movement (falling).
   * There are no stationary frames at the apex: vertical movement changes
@@ -55,16 +65,17 @@
   per simulation tick while Willy stands on it. Wear does not recover when he
   moves away. The tile progressively loses visible height and disappears after
   seven accumulated ticks, turning into `EMPTY` space. With the provisional
-  8-pixel collision body, this makes one uninterrupted walking pass consume a
+  terrain collision body, this makes one uninterrupted walking pass consume a
   tile completely, matching observed Amstrad CPC traversal. The Spectrum's
   [documented eight-frame behavior][zx-spectrum-tas] uses a different
   cell-contact model, so the exact CPC timing remains subject to frame-by-frame
   confirmation.
-* **Deadly Tiles:** Any intersection with spikes or environmental hazards
-  triggers the death sequence immediately. Static hazards will require
-  pixel-mask collision once their sprites are available.
+* **Deadly Tiles:** An occupied pixel shared by Willy's current animation mask
+  and a static-hazard mask triggers the death sequence immediately. Central
+  Cavern stores an individual 8x8 mask for each deadly cell.
 * **Conveyor Tiles:** A conveyor supports Willy from above and moves him in its
-  defined horizontal direction.
+  defined horizontal direction. Like a one-way platform, the conveyor itself
+  can be crossed from below; nearby solid tiles still cause ceiling contacts.
   * Once Willy is walking on a conveyor, its direction takes control. Opposite
     directional input cannot turn him around, and he cannot start a jump
     against the conveyor.

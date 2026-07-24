@@ -20,10 +20,17 @@ export interface ExitObject {
 
 export type LevelObject = CollectibleObject | ExitObject;
 
+export interface DeadlyMaskDefinition {
+  readonly column: number;
+  readonly row: number;
+  readonly pixels: readonly string[];
+}
+
 export interface LevelDefinition {
   readonly name: string;
   /** Pixel position relative to the top-left corner of the cavern. */
   readonly spawn: LevelPosition;
   readonly tiles: readonly string[];
   readonly objects: readonly LevelObject[];
+  readonly deadlyMasks?: readonly DeadlyMaskDefinition[];
 }

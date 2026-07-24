@@ -1,4 +1,12 @@
 import type { PlayerInput } from '../core/InputHandler';
+import {
+    definePixelMask,
+    expandPixelMaskHorizontally,
+    maskOverlapsRectangle,
+    mirrorPixelMask,
+    renderPixelMask,
+    type PixelMask,
+} from '../collision/PixelMask';
 import { TileMap } from '../world/TileMap';
 
 const LAST_PIXEL_OFFSET = 1;
@@ -13,21 +21,94 @@ export class MinerWilly {
     // body does not fill the whole width of that cell.
     public static readonly SPRITE_WIDTH = 16;
     public static readonly SPRITE_HEIGHT = 16;
-    public static readonly PLACEHOLDER_WIDTH = 8;
-    public static readonly PLACEHOLDER_HEIGHT = MinerWilly.SPRITE_HEIGHT;
-    private static readonly PLACEHOLDER_OFFSET_X = 0;
 
-    // Until real sprite masks exist, collision must match the placeholder
-    // exactly so invisible pixels cannot hit walls or hazards.
-    public static readonly COLLISION_WIDTH = MinerWilly.PLACEHOLDER_WIDTH;
-    public static readonly COLLISION_HEIGHT = MinerWilly.PLACEHOLDER_HEIGHT;
-    private static readonly COLLISION_OFFSET_X =
-        MinerWilly.PLACEHOLDER_OFFSET_X;
+    // Terrain remains tile-envelope based while hazards and level objects use
+    // the occupied pixels of the current animation frame.
+    public static readonly COLLISION_WIDTH = 10;
+    public static readonly COLLISION_HEIGHT = MinerWilly.SPRITE_HEIGHT;
+    private static readonly COLLISION_OFFSET_X = 4;
+    private static readonly DEADLY_MASK_EXPANSION = 1;
 
     // Movement parameters shared by every state that can move Willy.
     private static readonly HORIZONTAL_SPEED = 2;
     private static readonly FALL_SPEED = 4;
     private static readonly JUMP_START_FRAME = 0;
+    private static readonly RIGHT_MASKS: readonly PixelMask[] = [
+        definePixelMask([
+            '.........##.....',
+            '......#####.....',
+            '.....#####......',
+            '......##.#......',
+            '......#####.....',
+            '......####......',
+            '.......##.......',
+            '......####......',
+            '.....######.....',
+            '.....######.....',
+            '....####.###....',
+            '....#####.##....',
+            '......####......',
+            '.....###.##.....',
+            '.....##.###.....',
+            '.....###.###....',
+        ]),
+        definePixelMask([
+            '.........##.....',
+            '......#####.....',
+            '.....#####......',
+            '......##.#......',
+            '......#####.....',
+            '......####......',
+            '.......##.......',
+            '......####......',
+            '....########....',
+            '...##########...',
+            '...##.####.##...',
+            '......#####.....',
+            '.....###.##.#...',
+            '....##....###...',
+            '....###....#....',
+            '....###....#....',
+        ]),
+        definePixelMask([
+            '.........##.....',
+            '......#####.....',
+            '.....#####......',
+            '......##.#......',
+            '......#####.....',
+            '......####......',
+            '.......##.......',
+            '......####......',
+            '.....######.....',
+            '.....######.....',
+            '....####.###....',
+            '....#####.##....',
+            '......####......',
+            '.....###.##.....',
+            '.....##.###.....',
+            '.....###.###....',
+        ]),
+        definePixelMask([
+            '.........##.....',
+            '......#####.....',
+            '.....#####......',
+            '......##.#......',
+            '......#####.....',
+            '......####......',
+            '.......##.......',
+            '......####......',
+            '.....##.###.....',
+            '.....##.###.....',
+            '.....##.###.....',
+            '.....###.##.....',
+            '......####......',
+            '.......##.......',
+            '.......##.......',
+            '.......###......',
+        ]),
+    ];
+    private static readonly LEFT_MASKS: readonly PixelMask[] =
+        MinerWilly.RIGHT_MASKS.map(mirrorPixelMask);
 
     public get collisionX(): number {
         return this.x + MinerWilly.COLLISION_OFFSET_X;
@@ -55,10 +136,15 @@ export class MinerWilly {
         width: number,
         height: number,
     ): boolean {
-        return this.collisionX < x + width
-            && this.collisionX + MinerWilly.COLLISION_WIDTH > x
-            && this.collisionY < y + height
-            && this.collisionY + MinerWilly.COLLISION_HEIGHT > y;
+        return maskOverlapsRectangle(
+            this.collisionMask,
+            this.x,
+            this.y,
+            x,
+            y,
+            width,
+            height,
+        );
     }
 
     // Jump tracking variables
@@ -66,6 +152,23 @@ export class MinerWilly {
     private isFalling: boolean = false;
     private jumpFrame: number = MinerWilly.JUMP_START_FRAME;
     private jumpDirection: 'NONE' | 'LEFT' | 'RIGHT' = 'NONE';
+    private facing: 'LEFT' | 'RIGHT' = 'RIGHT';
+    private animationFrame = 0;
+
+    public get collisionMask(): PixelMask {
+        const masks = this.facing === 'LEFT'
+            ? MinerWilly.LEFT_MASKS
+            : MinerWilly.RIGHT_MASKS;
+
+        return masks[this.animationFrame];
+    }
+
+    public get deadlyCollisionMask(): PixelMask {
+        return expandPixelMaskHorizontally(
+            this.collisionMask,
+            MinerWilly.DEADLY_MASK_EXPANSION,
+        );
+    }
 
     public get isGrounded(): boolean {
         return !this.isJumping && !this.isFalling;
@@ -122,13 +225,6 @@ export class MinerWilly {
      * Standard horizontal walking movement when touching solid ground.
      */
     private handleGroundMovement(input: PlayerInput, tileMap: TileMap): void {
-        if (input.isLeftPressed) {
-            this.moveHorizontally(tileMap, -MinerWilly.HORIZONTAL_SPEED);
-        } else if (input.isRightPressed) {
-            this.moveHorizontally(tileMap, MinerWilly.HORIZONTAL_SPEED);
-        }
-
-        // Initiate jump sequences
         if (input.isJumpPressed) {
             this.isJumping = true;
             this.jumpFrame = MinerWilly.JUMP_START_FRAME;
@@ -141,6 +237,17 @@ export class MinerWilly {
             } else {
                 this.jumpDirection = 'NONE';
             }
+
+            // The launch input is also the first arc frame. Deferring this
+            // until the next update creates a visible one-tick pause.
+            this.handleAirMovement(tileMap);
+            return;
+        }
+
+        if (input.isLeftPressed) {
+            this.moveHorizontally(tileMap, -MinerWilly.HORIZONTAL_SPEED);
+        } else if (input.isRightPressed) {
+            this.moveHorizontally(tileMap, MinerWilly.HORIZONTAL_SPEED);
         }
     }
 
@@ -159,7 +266,15 @@ export class MinerWilly {
             return;
         }
 
+        const landingDirection = this.jumpDirection;
+
         if (verticalOffset > 0 && this.tryLandOnSurface(tileMap, this.y + verticalOffset)) {
+            if (landingDirection === 'LEFT') {
+                this.moveHorizontally(tileMap, -MinerWilly.HORIZONTAL_SPEED);
+            } else if (landingDirection === 'RIGHT') {
+                this.moveHorizontally(tileMap, MinerWilly.HORIZONTAL_SPEED);
+            }
+
             return;
         }
 
@@ -252,6 +367,12 @@ export class MinerWilly {
 
         if (!this.hasSolidAtVerticalEdge(tileMap, leadingEdgeX)) {
             this.x = nextX;
+            this.facing = offset < 0 ? 'LEFT' : 'RIGHT';
+            this.animationFrame = (
+                this.animationFrame
+                + (offset < 0 ? -1 : 1)
+                + MinerWilly.RIGHT_MASKS.length
+            ) % MinerWilly.RIGHT_MASKS.length;
             return;
         }
 
@@ -335,12 +456,7 @@ export class MinerWilly {
         );
 
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(
-            renderX + MinerWilly.PLACEHOLDER_OFFSET_X,
-            renderY,
-            MinerWilly.PLACEHOLDER_WIDTH,
-            MinerWilly.PLACEHOLDER_HEIGHT,
-        );
+        renderPixelMask(ctx, this.collisionMask, renderX, renderY);
     }
 
     private interpolateCoordinate(

@@ -44,6 +44,7 @@ should be trustworthy enough to support dynamic terrain and enemies.
 - [ ] Verify that every intended route works with the current movement rules.
 - [ ] Identify unintended shortcuts, unreachable areas and trapping positions.
 - [ ] Refine provisional collision dimensions where they affect traversal.
+- [x] Add route-relevant Willy and static-hazard pixel masks.
 - [ ] Record a short manual route checklist for future regression testing.
 - [x] Separate tile-level accuracy from later sprite-mask and pixel-art work.
 
@@ -102,7 +103,7 @@ Central Cavern's intended route and major obstacles are playable.
 
 - [ ] Replace placeholder geometry with tile and object artwork.
 - [ ] Add Willy's animation frames and facing direction.
-- [ ] Revisit collision precision when sprite masks are available.
+- [ ] Extend sprite-mask collision beyond static hazards.
 - [ ] Add enemy animation and final visual layering.
 - [ ] Recreate the HUD presentation.
 - [ ] Add sound effects and music with appropriate asset provenance.
