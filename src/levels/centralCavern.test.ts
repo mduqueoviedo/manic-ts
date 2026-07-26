@@ -55,4 +55,15 @@ describe('Central Cavern graybox', () => {
       TILE_TYPES.CONVEYOR_LEFT,
     );
   });
+
+  it('uses one identical mask for every instance of each deadly obstacle', () => {
+    const [firstStalactite, secondStalactite, ...plants] =
+      centralCavern.deadlyMasks;
+
+    expect(secondStalactite.pixels).toBe(firstStalactite.pixels);
+
+    for (const plant of plants.slice(1)) {
+      expect(plant.pixels).toBe(plants[0].pixels);
+    }
+  });
 });
