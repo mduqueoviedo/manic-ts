@@ -10,6 +10,8 @@ export const EMPTY_TILE_ROW = ' '.repeat(LEVEL_COLUMNS);
 export const SOLID_TILE_ROW = '#'.repeat(LEVEL_COLUMNS);
 
 interface TestLevelOptions {
+  readonly id?: string;
+  readonly number?: number;
   readonly name?: string;
   readonly spawn?: LevelPosition;
   readonly tiles?: readonly string[];
@@ -24,6 +26,8 @@ export function createTestLevel(
   options: TestLevelOptions = {},
 ): LevelDefinition {
   return {
+    id: options.id ?? 'test-level',
+    number: options.number ?? 1,
     name: options.name ?? 'Test level',
     spawn: options.spawn ?? { x: 0, y: 0 },
     tiles: options.tiles ?? createEmptyTileRows(),

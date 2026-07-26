@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { TILE_TYPES, TileMap } from '../world/TileMap';
-import { centralCavern } from './centralCavern';
+import { TILE_TYPES, TileMap } from '../../world/TileMap';
+import { centralCavern } from '.';
 
 describe('Central Cavern graybox', () => {
+  it('has stable sequence metadata', () => {
+    expect(centralCavern.id).toBe('central-cavern');
+    expect(centralCavern.number).toBe(1);
+    expect(centralCavern.name).toBe('Central Cavern');
+  });
+
   it('matches the audited CPC terrain layout', () => {
     expect(centralCavern.tiles).toEqual([
       '#          !    !              #',

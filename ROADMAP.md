@@ -117,6 +117,8 @@ Central Cavern's intended route and major obstacles are playable.
 
 ## Milestone 8: Additional caverns
 
+- [x] Organize cavern definitions in sequence-prefixed directories.
+- [x] Add stable cavern identity and an explicitly validated level registry.
 - [ ] Establish a repeatable workflow for defining and validating cavern data.
 - [ ] Add level-definition validation for objects and enemy routes.
 - [ ] Implement additional caverns incrementally.

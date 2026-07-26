@@ -27,6 +27,10 @@ export interface DeadlyMaskDefinition {
 }
 
 export interface LevelDefinition {
+  /** Stable identity for progression and persisted game state. */
+  readonly id: string;
+  /** One-based position in the original cavern sequence. */
+  readonly number: number;
   readonly name: string;
   /** Pixel position relative to the top-left corner of the cavern. */
   readonly spawn: LevelPosition;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MinerWilly } from '../entities/MinerWilly';
-import { centralCavern } from '../levels/centralCavern';
+import { centralCavern } from '../levels/01-central-cavern';
 import { LevelState } from './LevelState';
 import { TileMap } from './TileMap';
 

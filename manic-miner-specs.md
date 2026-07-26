@@ -72,7 +72,8 @@
   confirmation.
 * **Deadly Tiles:** An occupied pixel shared by Willy's current animation mask
   and a static-hazard mask triggers the death sequence immediately. Central
-  Cavern stores an individual 8x8 mask for each deadly cell.
+  Cavern defines one 8x8 mask per obstacle variant and reuses it for every
+  matching placement.
 * **Conveyor Tiles:** A conveyor supports Willy from above and moves him in its
   defined horizontal direction. Like a one-way platform, the conveyor itself
   can be crossed from below; nearby solid tiles still cause ceiling contacts.
@@ -105,7 +106,26 @@
 * **Air Supply:** Running out of air will also consume a life, but the air
   countdown and its death condition are not implemented yet.
 
-## 6. Timing and Frame Rate
+## 6. Level Definitions
+* **Directory Order:** Each cavern lives in a two-digit, sequence-prefixed
+  directory such as `01-central-cavern`. The prefix makes the original
+  20-cavern order visible while browsing the source tree.
+* **Runtime Order:** `levelRegistry.ts` is the source of truth for progression.
+  It lists caverns explicitly and rejects declared level numbers that do not
+  match their one-based registry position or reuse an existing stable ID.
+* **Stable Identity:** Every level definition has a slug-like ID for future
+  persisted state, a sequence number and its player-facing name.
+* **Local Variants:** Cavern-specific masks live beside their level definition.
+  A local catalog may contain multiple visual variants of the same broad
+  entity type, and each placement selects the appropriate variant. Assets
+  should move to a shared catalog only after multiple caverns genuinely reuse
+  them.
+* **Optional Modules:** Additional files such as `enemies.ts` or
+  `mechanisms.ts` should be introduced within a cavern directory when its
+  complexity warrants them; simple caverns do not need empty placeholder
+  modules.
+
+## 7. Timing and Frame Rate
 * **Game Speed:** The game logic advances at 12.5 ticks per second.
 * **Browser Loop:** Rendering uses `requestAnimationFrame`, while game logic is
   advanced through a fixed 12.5 Hz accumulator so movement does not depend on

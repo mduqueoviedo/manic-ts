@@ -1,26 +1,5 @@
-import type { LevelDefinition } from './LevelDefinition';
-
-const STALACTITE_MASK = [
-  '########',
-  '#######.',
-  '.######.',
-  '.#####..',
-  '.#..##..',
-  '.#..##..',
-  '....#...',
-  '....#...',
-] as const;
-
-const PLANT_MASK = [
-  '.#...#..',
-  '..#.#...',
-  '#..#.#..',
-  '.#.#...#',
-  '..###..#',
-  '#.#..##.',
-  '.#.##...',
-  '...#....',
-] as const;
+import type { LevelDefinition } from '../LevelDefinition';
+import { centralCavernHazardMasks } from './masks';
 
 /**
  * Initial Central Cavern reconstruction.
@@ -29,6 +8,8 @@ const PLANT_MASK = [
  * later gain their own state without changing the tile grid.
  */
 export const centralCavern = {
+  id: 'central-cavern',
+  number: 1,
   name: 'Central Cavern',
   spawn: { x: 16, y: 104 },
   tiles: [
@@ -61,32 +42,32 @@ export const centralCavern = {
     {
       column: 11,
       row: 0,
-      pixels: STALACTITE_MASK,
+      pixels: centralCavernHazardMasks.stalactite,
     },
     {
       column: 16,
       row: 0,
-      pixels: STALACTITE_MASK,
+      pixels: centralCavernHazardMasks.stalactite,
     },
     {
       column: 23,
       row: 4,
-      pixels: PLANT_MASK,
+      pixels: centralCavernHazardMasks.plant,
     },
     {
       column: 27,
       row: 4,
-      pixels: PLANT_MASK,
+      pixels: centralCavernHazardMasks.plant,
     },
     {
       column: 21,
       row: 8,
-      pixels: PLANT_MASK,
+      pixels: centralCavernHazardMasks.plant,
     },
     {
       column: 12,
       row: 12,
-      pixels: PLANT_MASK,
+      pixels: centralCavernHazardMasks.plant,
     },
   ],
 } satisfies LevelDefinition;
