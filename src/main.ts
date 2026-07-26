@@ -1,7 +1,7 @@
 import { InputHandler } from './core/InputHandler';
 import { GameSession } from './core/GameSession';
 import { fitCanvasToViewport } from './core/CanvasDisplay';
-import { centralCavern } from './levels/centralCavern';
+import { LEVELS } from './levels/levelRegistry';
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -46,7 +46,7 @@ let lastTime = 0;
 let accumulatedTime = 0;
 
 const input = new InputHandler();
-const gameSession = new GameSession(centralCavern);
+const gameSession = new GameSession(LEVELS[0]);
 
 canvas.width = CANVAS_WIDTH;
 canvas.height = CANVAS_HEIGHT;
