@@ -79,7 +79,7 @@ describe('CPC-sized visuals', () => {
     });
   });
 
-  it('renders each platform type with its audited resting height', () => {
+  it('renders each platform type within its audited visual envelope', () => {
     const { ctx, fillRectCalls } = createRecordingContext();
     const tileMap = new TileMap(centralCavern);
 
@@ -97,9 +97,24 @@ describe('CPC-sized visuals', () => {
       width: 8,
       height: 6,
     });
+    const conveyorX = TileMap.ORIGIN_X + 8 * TileMap.TILE_SIZE;
+    const conveyorY = TileMap.ORIGIN_Y + 9 * TileMap.TILE_SIZE;
+
     expect(fillRectCalls).toContainEqual({
-      x: TileMap.ORIGIN_X + 8 * TileMap.TILE_SIZE,
-      y: TileMap.ORIGIN_Y + 9 * TileMap.TILE_SIZE,
+      x: conveyorX + 2,
+      y: conveyorY + 1,
+      width: 1,
+      height: 1,
+    });
+    expect(fillRectCalls).toContainEqual({
+      x: conveyorX,
+      y: conveyorY + 7,
+      width: 1,
+      height: 1,
+    });
+    expect(fillRectCalls).not.toContainEqual({
+      x: conveyorX,
+      y: conveyorY,
       width: 8,
       height: 7,
     });

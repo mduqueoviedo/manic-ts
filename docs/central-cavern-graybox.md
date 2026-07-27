@@ -64,6 +64,13 @@ and `(12, 12)`.
   restart returns them to their initial state.
 - Collapsible placeholder wear changes color without changing the audited
   six-pixel visual envelope.
+- Conveyors now move Willy in their declared direction, override opposite
+  grounded input and lock new jumps to that direction. Their graybox rendering
+  cycles through the four recorded CPC phases for a left-moving conveyor and
+  mirrors the complete cycle for right-moving definitions. The top band moves
+  left, the next band stays fixed, the third moves right and the lower five
+  rows remain fixed. This layered motion makes the direction readable at the
+  original resolution.
 - Willy's four movement silhouettes and all six static-hazard masks were
   measured from a CPC gameplay capture. Static-hazard contact now compares
   occupied pixels instead of rectangular envelopes.
@@ -77,8 +84,8 @@ and `(12, 12)`.
   2-pixel horizontal step on each of the 18 arc frames. The launch input has
   no preliminary walking step or stationary transition tick, and the landing
   frame is not vertical-only.
-- Route completion cannot be signed off until conveyor movement, the Central
-  Cavern enemy and the remaining route checks are implemented.
+- Route completion cannot be signed off until the conveyor landing exception,
+  the Central Cavern enemy and the remaining route checks are implemented.
 
 ## Placeholder dimensions
 
@@ -91,7 +98,7 @@ These dimensions describe visible placeholder bounds, not collision masks.
 | Collectible | 7x7 pixels |
 | One-way floor | 8x5 pixels |
 | Collapsible floor | 8x6 pixels |
-| Conveyor | 8x7 pixels |
+| Conveyor | Four 8x8 animation-mask phases |
 | Solid tile envelope | 8x8 pixels |
 | Static-hazard mask cell | 8x8 pixels |
 | Exit | 16x16 pixels |

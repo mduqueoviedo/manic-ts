@@ -62,8 +62,8 @@ known inaccuracies are visual rather than structural.
 - [x] Make collapsible floors react while Willy stands on them.
 - [x] Add their visual degradation states and eventual disappearance.
 - [x] Restore all collapsible floors after losing a life.
-- [ ] Implement conveyor direction and horizontal movement.
-- [ ] Implement conveyor direction locking while Willy remains grounded.
+- [x] Implement conveyor direction and horizontal movement.
+- [x] Implement conveyor direction locking while Willy remains grounded.
 - [ ] Implement the immediate opposite-jump exception when landing against a
   conveyor's direction.
 - [ ] Verify the exact landing input window against the Amstrad CPC version.

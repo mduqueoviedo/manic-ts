@@ -46,6 +46,17 @@ const LEFT_INPUT: PlayerInput = {
   isLeftPressed: true,
 };
 
+function createSurfaceRow(
+  symbol: '#' | '<' | '>',
+  firstColumn: number = 0,
+  lastColumn: number = TileMap.COLUMNS - 1,
+): string {
+  return (
+    ' '.repeat(firstColumn)
+    + symbol.repeat(lastColumn - firstColumn + 1)
+  ).padEnd(TileMap.COLUMNS);
+}
+
 // The sheet stores the right-facing phases from leftmost to rightmost sprite
 // position. Willy starts on its third phase, then wraps through 4, 1 and 2.
 // Horizontal source offsets are removed because world movement applies them.
@@ -152,6 +163,86 @@ describe('MinerWilly', () => {
 
     expect(willy.x).toBe(START_X + HORIZONTAL_STEP);
     expect(willy.y).toBe(START_Y);
+  });
+
+  it('moves with a conveyor while idle or pressing against it', () => {
+    const leftConveyor = createTileMap({
+      [GROUND_ROW]: createSurfaceRow('<'),
+    });
+    const rightConveyor = createTileMap({
+      [GROUND_ROW]: createSurfaceRow('>'),
+    });
+    const leftWilly = new MinerWilly(START_X, START_Y);
+    const rightWilly = new MinerWilly(START_X, START_Y);
+
+    leftWilly.update(NO_INPUT, leftConveyor);
+    leftWilly.update(RIGHT_INPUT, leftConveyor);
+    rightWilly.update(NO_INPUT, rightConveyor);
+    rightWilly.update(LEFT_INPUT, rightConveyor);
+
+    expect(leftWilly.x).toBe(START_X - 2 * HORIZONTAL_STEP);
+    expect(rightWilly.x).toBe(START_X + 2 * HORIZONTAL_STEP);
+  });
+
+  it('locks a jump launched from a conveyor to its direction', () => {
+    const tileMap = createTileMap({
+      [GROUND_ROW]: createSurfaceRow('<'),
+    });
+    const willy = new MinerWilly(START_X, START_Y);
+    const opposingJump: PlayerInput = {
+      ...RIGHT_INPUT,
+      isJumpPressed: true,
+    };
+
+    willy.update(opposingJump, tileMap);
+    willy.update(RIGHT_INPUT, tileMap);
+
+    expect(willy.x).toBe(START_X - 2 * HORIZONTAL_STEP);
+    expect(willy.y).toBe(START_Y + JUMP_Y_OFFSETS[1]);
+  });
+
+  it('stops conveyor movement at a solid wall', () => {
+    const wallRow = `${' '.repeat(WALL_COLUMN)}#`.padEnd(TileMap.COLUMNS);
+    const tileMap = createTileMap({
+      2: wallRow,
+      3: wallRow,
+      [GROUND_ROW]: createSurfaceRow('>'),
+    });
+    const flushWithWall =
+      TileMap.ORIGIN_X
+      + WALL_COLUMN * TileMap.TILE_SIZE
+      - MinerWilly.COLLISION_WIDTH
+      - 4;
+    const willy = new MinerWilly(flushWithWall, START_Y);
+
+    willy.update(NO_INPUT, tileMap);
+
+    expect(willy.x).toBe(flushWithWall);
+    expect(willy.isGrounded).toBe(true);
+  });
+
+  it('falls vertically after a conveyor pushes him off its edge', () => {
+    const tileMap = createTileMap({
+      [GROUND_ROW]: createSurfaceRow('>', START_COLUMN, START_COLUMN),
+    });
+    const edgeX =
+      TileMap.ORIGIN_X
+      + (START_COLUMN + 1) * TileMap.TILE_SIZE
+      - MinerWilly.COLLISION_WIDTH
+      - 4;
+    const willy = new MinerWilly(edgeX, START_Y);
+
+    for (let tick = 0; tick < 5 && willy.isGrounded; tick++) {
+      willy.update(LEFT_INPUT, tileMap);
+    }
+
+    expect(willy.isGrounded).toBe(false);
+    const fallX = willy.x;
+
+    willy.update(RIGHT_INPUT, tileMap);
+
+    expect(willy.x).toBe(fallX);
+    expect(willy.y).toBe(START_Y + 4);
   });
 
   it('preserves all four source silhouettes while walking right', () => {
