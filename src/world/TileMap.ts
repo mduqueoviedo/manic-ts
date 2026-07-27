@@ -8,6 +8,7 @@ import { CANVAS_WIDTH } from '../core/GameConfig';
 import {
   definePixelMask,
   masksOverlap,
+  mirrorPixelMask,
   renderPixelMask,
   type PixelMask,
 } from '../collision/PixelMask';
@@ -24,6 +25,7 @@ export const TILE_TYPES = {
 } as const;
 
 export type TileType = typeof TILE_TYPES[keyof typeof TILE_TYPES];
+export type ConveyorDirection = -1 | 0 | 1;
 
 const TILE_SIZE = 8;
 const LAST_PIXEL_OFFSET = 1;
@@ -40,6 +42,53 @@ const DEADLY_MASK = definePixelMask([
   '...#....',
   '........',
 ]);
+// Four consecutive phases measured at integer 2x scale from the Central
+// Cavern CPC longplay. The top row moves left while the third row moves right;
+// every other row stays fixed. Right-moving conveyors mirror the full cycle.
+const CONVEYOR_LEFT_MASKS = [
+  definePixelMask([
+    '####....',
+    '..####..',
+    '####....',
+    '..####..',
+    '....##..',
+    '........',
+    '##....##',
+    '########',
+  ]),
+  definePixelMask([
+    '##....##',
+    '..####..',
+    '..####..',
+    '..####..',
+    '....##..',
+    '........',
+    '##....##',
+    '########',
+  ]),
+  definePixelMask([
+    '....####',
+    '..####..',
+    '....####',
+    '..####..',
+    '....##..',
+    '........',
+    '##....##',
+    '########',
+  ]),
+  definePixelMask([
+    '..####..',
+    '..####..',
+    '##....##',
+    '..####..',
+    '....##..',
+    '........',
+    '##....##',
+    '########',
+  ]),
+] as const;
+const CONVEYOR_RIGHT_MASKS = CONVEYOR_LEFT_MASKS.map(mirrorPixelMask);
+const CONVEYOR_ANIMATION_FRAMES = CONVEYOR_LEFT_MASKS.length;
 
 const TILE_BY_SYMBOL: Readonly<Record<string, TileType>> = {
   ' ': TILE_TYPES.EMPTY,
@@ -57,8 +106,8 @@ const TILE_COLORS: Readonly<Record<TileType, string>> = {
   [TILE_TYPES.ONE_WAY]: '#00ffff',
   [TILE_TYPES.COLLAPSIBLE]: '#ffff00',
   [TILE_TYPES.DEADLY]: '#ff0000',
-  [TILE_TYPES.CONVEYOR_LEFT]: '#ff00ff',
-  [TILE_TYPES.CONVEYOR_RIGHT]: '#ff00ff',
+  [TILE_TYPES.CONVEYOR_LEFT]: '#00ff00',
+  [TILE_TYPES.CONVEYOR_RIGHT]: '#00ff00',
 };
 
 const COLLAPSIBLE_WEAR_COLORS: readonly string[] = [
@@ -77,8 +126,8 @@ const TILE_HEIGHT_BY_TYPE: Readonly<Record<TileType, number>> = {
   [TILE_TYPES.ONE_WAY]: 5,
   [TILE_TYPES.COLLAPSIBLE]: 6,
   [TILE_TYPES.DEADLY]: TILE_SIZE,
-  [TILE_TYPES.CONVEYOR_LEFT]: 7,
-  [TILE_TYPES.CONVEYOR_RIGHT]: 7,
+  [TILE_TYPES.CONVEYOR_LEFT]: TILE_SIZE,
+  [TILE_TYPES.CONVEYOR_RIGHT]: TILE_SIZE,
 };
 
 const SUPPORT_TILE_TYPES: ReadonlySet<TileType> = new Set([
@@ -104,6 +153,7 @@ export class TileMap {
   private readonly grid: TileType[][];
   private readonly collapsibleWear: number[][];
   private readonly deadlyMasks: ReadonlyMap<string, PixelMask>;
+  private conveyorAnimationFrame = 0;
 
   constructor(private readonly level: LevelDefinition) {
     this.grid = this.createGrid(level.tiles);
@@ -154,6 +204,56 @@ export class TileMap {
    */
   public isSupportTile(tile: TileType | undefined): boolean {
     return tile !== undefined && SUPPORT_TILE_TYPES.has(tile);
+  }
+
+  /**
+   * Advances conveyor artwork on simulation ticks so animation speed remains
+   * independent of the browser render rate.
+   */
+  public advanceAnimations(): void {
+    this.conveyorAnimationFrame = (
+      this.conveyorAnimationFrame + 1
+    ) % CONVEYOR_ANIMATION_FRAMES;
+  }
+
+  /**
+   * Returns the shared direction of every conveyor below a horizontal
+   * footprint. Opposing conveyors cancel rather than receiving an arbitrary
+   * priority.
+   */
+  public getConveyorDirectionBelow(
+    x: number,
+    width: number,
+    feetY: number,
+  ): ConveyorDirection {
+    const firstColumn = Math.floor(
+      (x - TileMap.ORIGIN_X) / TileMap.TILE_SIZE,
+    );
+    const lastColumn = Math.floor(
+      (x + width - LAST_PIXEL_OFFSET - TileMap.ORIGIN_X)
+        / TileMap.TILE_SIZE,
+    );
+    const row = Math.floor(
+      (feetY - TileMap.ORIGIN_Y) / TileMap.TILE_SIZE,
+    );
+    let direction: ConveyorDirection = 0;
+
+    for (let column = firstColumn; column <= lastColumn; column++) {
+      const tile = this.getTileAtGrid(column, row);
+      const tileDirection = this.getConveyorDirection(tile);
+
+      if (tileDirection === 0) {
+        continue;
+      }
+
+      if (direction !== 0 && direction !== tileDirection) {
+        return 0;
+      }
+
+      direction = tileDirection;
+    }
+
+    return direction;
   }
 
   /**
@@ -272,6 +372,20 @@ export class TileMap {
 
         if (tile === TILE_TYPES.DEADLY) {
           renderPixelMask(ctx, this.getDeadlyMask(col, row), x, y);
+        } else if (tile === TILE_TYPES.CONVEYOR_LEFT) {
+          renderPixelMask(
+            ctx,
+            CONVEYOR_LEFT_MASKS[this.conveyorAnimationFrame],
+            x,
+            y,
+          );
+        } else if (tile === TILE_TYPES.CONVEYOR_RIGHT) {
+          renderPixelMask(
+            ctx,
+            CONVEYOR_RIGHT_MASKS[this.conveyorAnimationFrame],
+            x,
+            y,
+          );
         } else {
           ctx.fillRect(x, y, size, TILE_HEIGHT_BY_TYPE[tile]);
         }
@@ -289,6 +403,20 @@ export class TileMap {
     }
 
     return COLLAPSIBLE_WEAR_COLORS[this.collapsibleWear[row][column]];
+  }
+
+  private getConveyorDirection(
+    tile: TileType | undefined,
+  ): ConveyorDirection {
+    if (tile === TILE_TYPES.CONVEYOR_LEFT) {
+      return -1;
+    }
+
+    if (tile === TILE_TYPES.CONVEYOR_RIGHT) {
+      return 1;
+    }
+
+    return 0;
   }
 
   private getDeadlyMask(column: number, row: number): PixelMask {

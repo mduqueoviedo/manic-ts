@@ -89,6 +89,165 @@ describe('TileMap', () => {
     expect(tileMap.isSupportTile(undefined)).toBe(false);
   });
 
+  it('reports the conveyor direction below a complete footprint', () => {
+    const rows = createEmptyTileRows();
+    rows[3] = '  <<  >>'.padEnd(TileMap.COLUMNS);
+    const tileMap = new TileMap(createTestLevel({ tiles: rows }));
+    const rowY = 3 * TileMap.TILE_SIZE;
+
+    expect(tileMap.getConveyorDirectionBelow(
+      TileMap.ORIGIN_X + 2 * TileMap.TILE_SIZE,
+      2 * TileMap.TILE_SIZE,
+      rowY,
+    )).toBe(-1);
+    expect(tileMap.getConveyorDirectionBelow(
+      TileMap.ORIGIN_X + 6 * TileMap.TILE_SIZE,
+      2 * TileMap.TILE_SIZE,
+      rowY,
+    )).toBe(1);
+    expect(tileMap.getConveyorDirectionBelow(
+      TileMap.ORIGIN_X + 3 * TileMap.TILE_SIZE,
+      4 * TileMap.TILE_SIZE,
+      rowY,
+    )).toBe(0);
+  });
+
+  it('mirrors the conveyor mask to communicate its direction', () => {
+    const rows = createEmptyTileRows();
+    rows[2] = '<>'.padEnd(TileMap.COLUMNS);
+    const tileMap = new TileMap(createTestLevel({ tiles: rows }));
+    const filledPixels: Array<Readonly<{ x: number; y: number }>> = [];
+    const ctx = {
+      fillStyle: '',
+      fillRect(x: number, y: number, width: number, height: number): void {
+        if (width === 1 && height === 1) {
+          filledPixels.push({ x, y });
+        }
+      },
+    } as CanvasRenderingContext2D;
+    const leftX = TileMap.ORIGIN_X;
+    const rightX = leftX + TileMap.TILE_SIZE;
+    const tileY = 2 * TileMap.TILE_SIZE;
+    const readRenderedMask = (tileX: number): string[] =>
+      Array.from(
+        { length: TileMap.TILE_SIZE },
+        (_, y) => Array.from(
+          { length: TileMap.TILE_SIZE },
+          (_, x) => filledPixels.some(
+            (pixel) => pixel.x === tileX + x && pixel.y === tileY + y,
+          ) ? '#' : '.',
+        ).join(''),
+      );
+
+    tileMap.render(ctx);
+
+    expect(readRenderedMask(leftX)).toEqual([
+      '####....',
+      '..####..',
+      '####....',
+      '..####..',
+      '....##..',
+      '........',
+      '##....##',
+      '########',
+    ]);
+    expect(readRenderedMask(rightX)).toEqual([
+      '....####',
+      '..####..',
+      '....####',
+      '..####..',
+      '..##....',
+      '........',
+      '##....##',
+      '########',
+    ]);
+  });
+
+  it('moves the two conveyor bands in opposite directions', () => {
+    const rows = createEmptyTileRows();
+    rows[2] = '<'.padEnd(TileMap.COLUMNS);
+    const tileMap = new TileMap(createTestLevel({ tiles: rows }));
+    const filledPixels: Array<Readonly<{ x: number; y: number }>> = [];
+    const ctx = {
+      fillStyle: '',
+      fillRect(x: number, y: number, width: number, height: number): void {
+        if (width === 1 && height === 1) {
+          filledPixels.push({ x, y });
+        }
+      },
+    } as CanvasRenderingContext2D;
+    const tileX = TileMap.ORIGIN_X;
+    const tileY = 2 * TileMap.TILE_SIZE;
+    const readRenderedMask = (): string[] =>
+      Array.from(
+        { length: TileMap.TILE_SIZE },
+        (_, y) => Array.from(
+          { length: TileMap.TILE_SIZE },
+          (_, x) => filledPixels.some(
+            (pixel) => pixel.x === tileX + x && pixel.y === tileY + y,
+          ) ? '#' : '.',
+        ).join(''),
+      );
+    const expectedFrames = [
+      [
+        '##....##',
+        '..####..',
+        '..####..',
+        '..####..',
+        '....##..',
+        '........',
+        '##....##',
+        '########',
+      ],
+      [
+        '....####',
+        '..####..',
+        '....####',
+        '..####..',
+        '....##..',
+        '........',
+        '##....##',
+        '########',
+      ],
+      [
+        '..####..',
+        '..####..',
+        '##....##',
+        '..####..',
+        '....##..',
+        '........',
+        '##....##',
+        '########',
+      ],
+      [
+        '####....',
+        '..####..',
+        '####....',
+        '..####..',
+        '....##..',
+        '........',
+        '##....##',
+        '########',
+      ],
+    ];
+
+    for (const expectedFrame of expectedFrames) {
+      tileMap.advanceAnimations();
+      filledPixels.length = 0;
+      tileMap.render(ctx);
+
+      expect(readRenderedMask()).toEqual(expectedFrame);
+      expect(expectedFrame[1]).toBe('..####..');
+      expect(expectedFrame[3]).toBe('..####..');
+      expect(expectedFrame.slice(4)).toEqual([
+        '....##..',
+        '........',
+        '##....##',
+        '########',
+      ]);
+    }
+  });
+
   it('detects occupied deadly pixels without hitting transparent pixels', () => {
     const rows = createEmptyTileRows();
     rows[2] = '  !'.padEnd(TileMap.COLUMNS);

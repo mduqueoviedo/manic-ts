@@ -73,6 +73,7 @@ export class GameSession {
       return;
     }
 
+    this.tileMap.advanceAnimations();
     this.willy.update(input, this.tileMap);
     if (this.willy.isGrounded) {
       this.tileMap.wearCollapsibleTilesBelow(

@@ -229,12 +229,22 @@ export class MinerWilly {
      * Standard horizontal walking movement when touching solid ground.
      */
     private handleGroundMovement(input: PlayerInput, tileMap: TileMap): void {
+        const conveyorDirection = tileMap.getConveyorDirectionBelow(
+            this.collisionX,
+            MinerWilly.COLLISION_WIDTH,
+            this.collisionY + MinerWilly.COLLISION_HEIGHT,
+        );
+
         if (input.isJumpPressed) {
             this.isJumping = true;
             this.jumpFrame = MinerWilly.JUMP_START_FRAME;
 
             // Lock horizontal trajectory instantly at the frame of launch
-            if (input.isLeftPressed) {
+            if (conveyorDirection < 0) {
+                this.jumpDirection = 'LEFT';
+            } else if (conveyorDirection > 0) {
+                this.jumpDirection = 'RIGHT';
+            } else if (input.isLeftPressed) {
                 this.jumpDirection = 'LEFT';
             } else if (input.isRightPressed) {
                 this.jumpDirection = 'RIGHT';
@@ -248,7 +258,11 @@ export class MinerWilly {
             return;
         }
 
-        if (input.isLeftPressed) {
+        if (conveyorDirection < 0) {
+            this.moveHorizontally(tileMap, -MinerWilly.HORIZONTAL_SPEED);
+        } else if (conveyorDirection > 0) {
+            this.moveHorizontally(tileMap, MinerWilly.HORIZONTAL_SPEED);
+        } else if (input.isLeftPressed) {
             this.moveHorizontally(tileMap, -MinerWilly.HORIZONTAL_SPEED);
         } else if (input.isRightPressed) {
             this.moveHorizontally(tileMap, MinerWilly.HORIZONTAL_SPEED);

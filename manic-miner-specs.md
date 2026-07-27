@@ -16,8 +16,9 @@
   frame.
 * **Provisional Visual Bounds:** Willy is rendered from the monochrome pixels
   of his four CPC movement masks, without final sprite colors. Collectibles
-  remain 7x7 rectangles. One-way, collapsible and conveyor tiles use visible
-  heights of 5, 6 and 7 pixels respectively.
+  remain 7x7 rectangles. One-way and collapsible tiles use visible heights of
+  5 and 6 pixels respectively. Conveyors use four CPC-derived directional 8x8
+  animation masks.
 * **Collision Geometry:** Willy keeps a provisional 10x16 terrain envelope,
   aligned four pixels from the left edge of his sprite cell. This preserves
   the measured clearance between his visible silhouette and raised solid
@@ -75,8 +76,13 @@
   Cavern defines one 8x8 mask per obstacle variant and reuses it for every
   matching placement.
 * **Conveyor Tiles:** A conveyor supports Willy from above and moves him in its
-  defined horizontal direction. Like a one-way platform, the conveyor itself
-  can be crossed from below; nearby solid tiles still cause ceiling contacts.
+  defined horizontal direction. Its four recorded directional masks advance
+  once per simulation tick, independently of the browser render rate. The top
+  row moves two pixels in the conveyor direction, the next row stays fixed,
+  and the third row moves two pixels in the opposite direction. The remaining
+  five rows stay fixed, creating the appearance of a belt rotating around its
+  rollers. Like a one-way platform, the conveyor itself can be crossed from
+  below; nearby solid tiles still cause ceiling contacts.
   * Once Willy is walking on a conveyor, its direction takes control. Opposite
     directional input cannot turn him around, and he cannot start a jump
     against the conveyor.
