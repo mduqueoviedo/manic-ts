@@ -22,6 +22,9 @@ implementation.
   and screenshots.
 - [MobyGames Central Cavern screenshot][mobygames] for a clean capture of the
   initial Amstrad CPC cavern.
+- [The Spriters Resource Miner Willy sheet][willy-sheet] for the exact 16x16
+  source grid of the four ZX Spectrum movement phases, cross-checked against
+  the matching Willy silhouettes in CPC captures.
 - [JSW/MM community conveyor discussion][conveyor-discussion] for the
   CPC-specific ability to travel right against Central Cavern's left-moving
   conveyor under the landing exception.
@@ -105,4 +108,5 @@ These dimensions describe visible placeholder bounds, not collision masks.
 
 [cpc-power]: https://www.cpc-power.com/index.php?num=1347&page=detail
 [mobygames]: https://www.mobygames.com/game/6440/manic-miner/screenshots/cpc/441969/
+[willy-sheet]: https://www.spriters-resource.com/zx_spectrum/manicminer/asset/113060/
 [conveyor-discussion]: https://jswmm.co.uk/topic/580-automated-generation-of-manic-miner-speedrunwalkthrough/?comment=14676&do=findComment
