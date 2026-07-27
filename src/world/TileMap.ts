@@ -42,6 +42,41 @@ const DEADLY_MASK = definePixelMask([
   '...#....',
   '........',
 ]);
+// Central Cavern uses the same brick bond for raised blocks and side walls.
+// Horizontal blocks leave their first scanline transparent, while vertically
+// chained wall cells add a complete red scanline to close the seam.
+const HORIZONTAL_BRICK_RED_MASK = definePixelMask([
+  '........',
+  '..#...#.',
+  '########',
+  '.....#..',
+  '########',
+  '..#.....',
+  '########',
+  '.....#..',
+]);
+const VERTICAL_BRICK_RED_MASK = definePixelMask([
+  '########',
+  '..#...#.',
+  '########',
+  '.....#..',
+  '########',
+  '..#.....',
+  '########',
+  '.....#..',
+]);
+const BRICK_GREEN_MASK = definePixelMask([
+  '........',
+  '##.###.#',
+  '........',
+  '#####.##',
+  '........',
+  '##.#####',
+  '........',
+  '#####.##',
+]);
+const BRICK_RED = '#ff0000';
+const BRICK_GREEN = '#00ff00';
 // Four consecutive phases measured at integer 2x scale from the Central
 // Cavern CPC longplay. The top row moves left while the third row moves right;
 // every other row stays fixed. Right-moving conveyors mirror the full cycle.
@@ -370,7 +405,9 @@ export class TileMap {
         const x = TileMap.ORIGIN_X + col * size;
         const y = TileMap.ORIGIN_Y + row * size;
 
-        if (tile === TILE_TYPES.DEADLY) {
+        if (tile === TILE_TYPES.SOLID) {
+          this.renderSolidBrick(ctx, col, row, x, y);
+        } else if (tile === TILE_TYPES.DEADLY) {
           renderPixelMask(ctx, this.getDeadlyMask(col, row), x, y);
         } else if (tile === TILE_TYPES.CONVEYOR_LEFT) {
           renderPixelMask(
@@ -391,6 +428,37 @@ export class TileMap {
         }
       }
     }
+  }
+
+  private renderSolidBrick(
+    ctx: CanvasRenderingContext2D,
+    column: number,
+    row: number,
+    x: number,
+    y: number,
+  ): void {
+    ctx.fillStyle = BRICK_RED;
+    renderPixelMask(
+      ctx,
+      this.usesVerticalBrickMask(column, row)
+        ? VERTICAL_BRICK_RED_MASK
+        : HORIZONTAL_BRICK_RED_MASK,
+      x,
+      y,
+    );
+    ctx.fillStyle = BRICK_GREEN;
+    renderPixelMask(ctx, BRICK_GREEN_MASK, x, y);
+  }
+
+  private usesVerticalBrickMask(column: number, row: number): boolean {
+    const hasVerticalNeighbor =
+      this.getTileAtGrid(column, row - 1) === TILE_TYPES.SOLID
+      || this.getTileAtGrid(column, row + 1) === TILE_TYPES.SOLID;
+    const hasHorizontalNeighbor =
+      this.getTileAtGrid(column - 1, row) === TILE_TYPES.SOLID
+      || this.getTileAtGrid(column + 1, row) === TILE_TYPES.SOLID;
+
+    return hasVerticalNeighbor && !hasHorizontalNeighbor;
   }
 
   private getRenderedTileColor(
