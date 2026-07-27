@@ -89,6 +89,64 @@ describe('TileMap', () => {
     expect(tileMap.isSupportTile(undefined)).toBe(false);
   });
 
+  it('renders the measured horizontal and vertical brick masks', () => {
+    const rows = createEmptyTileRows();
+    rows[1] = ' #'.padEnd(TileMap.COLUMNS);
+    rows[2] = ' #  ##'.padEnd(TileMap.COLUMNS);
+    const tileMap = new TileMap(createTestLevel({ tiles: rows }));
+    const renderedPixels = new Map<string, string>();
+    const ctx = {
+      fillStyle: '',
+      fillRect(x: number, y: number, width: number, height: number): void {
+        if (width === 1 && height === 1) {
+          renderedPixels.set(`${x},${y}`, String(this.fillStyle));
+        }
+      },
+    } as CanvasRenderingContext2D;
+    const tileY = 2 * TileMap.TILE_SIZE;
+    const readRenderedBrick = (column: number): string[] => {
+      const tileX = TileMap.ORIGIN_X + column * TileMap.TILE_SIZE;
+
+      return Array.from(
+        { length: TileMap.TILE_SIZE },
+        (_, y) => Array.from(
+          { length: TileMap.TILE_SIZE },
+          (_, x) => {
+            const color = renderedPixels.get(`${tileX + x},${tileY + y}`);
+
+            if (color === '#ff0000') return 'R';
+            if (color === '#00ff00') return 'G';
+
+            return '.';
+          },
+        ).join(''),
+      );
+    };
+
+    tileMap.render(ctx);
+
+    expect(readRenderedBrick(1)).toEqual([
+      'RRRRRRRR',
+      'GGRGGGRG',
+      'RRRRRRRR',
+      'GGGGGRGG',
+      'RRRRRRRR',
+      'GGRGGGGG',
+      'RRRRRRRR',
+      'GGGGGRGG',
+    ]);
+    expect(readRenderedBrick(4)).toEqual([
+      '........',
+      'GGRGGGRG',
+      'RRRRRRRR',
+      'GGGGGRGG',
+      'RRRRRRRR',
+      'GGRGGGGG',
+      'RRRRRRRR',
+      'GGGGGRGG',
+    ]);
+  });
+
   it('reports the conveyor direction below a complete footprint', () => {
     const rows = createEmptyTileRows();
     rows[3] = '  <<  >>'.padEnd(TileMap.COLUMNS);

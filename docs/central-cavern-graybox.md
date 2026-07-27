@@ -57,8 +57,10 @@ and `(12, 12)`.
 - The conveyor was previously encoded as moving right. CPC behavior confirms
   that it moves left, so the level symbol and tile model now preserve its
   direction explicitly.
-- The visual placeholders now use audited bounding boxes even though they
-  remain flat colored rectangles.
+- Solid terrain now uses the measured red-and-green CPC brick bond. Raised
+  horizontal blocks leave their first scanline transparent, while vertically
+  chained side-wall cells add a complete red scanline to close each seam.
+  Their collision geometry remains the full 8x8 solid cell.
 - Collapsible tiles now degrade independently over seven accumulated support
   ticks. One uninterrupted walking pass removes them completely, and a life
   restart returns them to their initial state.
@@ -99,7 +101,7 @@ These dimensions describe visible placeholder bounds, not collision masks.
 | One-way floor | 8x5 pixels |
 | Collapsible floor | 8x6 pixels |
 | Conveyor | Four 8x8 animation-mask phases |
-| Solid tile envelope | 8x8 pixels |
+| Solid tile artwork | Horizontal and vertical 8x8 brick masks |
 | Static-hazard mask cell | 8x8 pixels |
 | Exit | 16x16 pixels |
 

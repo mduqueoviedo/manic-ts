@@ -18,7 +18,9 @@
   of his four CPC movement masks, without final sprite colors. Collectibles
   remain 7x7 rectangles. One-way and collapsible tiles use visible heights of
   5 and 6 pixels respectively. Conveyors use four CPC-derived directional 8x8
-  animation masks.
+  animation masks. Solid terrain uses the measured red-and-green CPC brick
+  pattern: horizontal blocks have a transparent first scanline and vertically
+  chained wall cells close it with a complete red row.
 * **Collision Geometry:** Willy keeps a provisional 10x16 terrain envelope,
   aligned four pixels from the left edge of his sprite cell. This preserves
   the measured clearance between his visible silhouette and raised solid
@@ -58,7 +60,9 @@
 
 ## 4. Collision Rules
 * **Tile-Based:** Collisions are evaluated against the 8x8 grid.
-* **Solid Tiles:** Block Willy from every direction.
+* **Solid Tiles:** Block Willy from every direction. Their full 8x8 collision
+  cell is independent of the transparent first scanline in the horizontal
+  brick artwork.
 * **One-Way Platforms:** Can be crossed from below and from either side. Willy
   lands on their top surface only while descending, when his feet cross the
   platform between the previous and current game tick.
