@@ -33,6 +33,10 @@ export class MinerWilly {
     private static readonly HORIZONTAL_SPEED = 2;
     private static readonly FALL_SPEED = 4;
     private static readonly JUMP_START_FRAME = 0;
+    // The source sheet bakes a two-pixel horizontal advance into each phase.
+    // These masks cancel that offset because world movement already advances
+    // Willy by two pixels per tick. The cycle starts at its third source phase
+    // to preserve Central Cavern's initial silhouette.
     private static readonly RIGHT_MASKS: readonly PixelMask[] = [
         definePixelMask([
             '.........##.....',
@@ -61,13 +65,13 @@ export class MinerWilly {
             '......####......',
             '.......##.......',
             '......####......',
+            '.....######.....',
             '....########....',
             '...##########...',
             '...##.####.##...',
             '......#####.....',
             '.....###.##.#...',
             '....##....###...',
-            '....###....#....',
             '....###....#....',
         ]),
         definePixelMask([

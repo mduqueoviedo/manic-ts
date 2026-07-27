@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { PlayerInput } from '../core/InputHandler';
 import {
+  definePixelMask,
+  mirrorPixelMask,
+  type PixelMask,
+} from '../collision/PixelMask';
+import {
   createEmptyTileRows,
   createTestLevel,
   SOLID_TILE_ROW,
@@ -41,6 +46,84 @@ const LEFT_INPUT: PlayerInput = {
   isLeftPressed: true,
 };
 
+// The sheet stores the right-facing phases from leftmost to rightmost sprite
+// position. Willy starts on its third phase, then wraps through 4, 1 and 2.
+// Horizontal source offsets are removed because world movement applies them.
+const EXPECTED_RIGHT_MASKS: readonly PixelMask[] = [
+  definePixelMask([
+    '.........##.....',
+    '......#####.....',
+    '.....#####......',
+    '......##.#......',
+    '......#####.....',
+    '......####......',
+    '.......##.......',
+    '......####......',
+    '.....######.....',
+    '.....######.....',
+    '....####.###....',
+    '....#####.##....',
+    '......####......',
+    '.....###.##.....',
+    '.....##.###.....',
+    '.....###.###....',
+  ]),
+  definePixelMask([
+    '.........##.....',
+    '......#####.....',
+    '.....#####......',
+    '......##.#......',
+    '......#####.....',
+    '......####......',
+    '.......##.......',
+    '......####......',
+    '.....######.....',
+    '....########....',
+    '...##########...',
+    '...##.####.##...',
+    '......#####.....',
+    '.....###.##.#...',
+    '....##....###...',
+    '....###....#....',
+  ]),
+  definePixelMask([
+    '.........##.....',
+    '......#####.....',
+    '.....#####......',
+    '......##.#......',
+    '......#####.....',
+    '......####......',
+    '.......##.......',
+    '......####......',
+    '.....######.....',
+    '.....######.....',
+    '....####.###....',
+    '....#####.##....',
+    '......####......',
+    '.....###.##.....',
+    '.....##.###.....',
+    '.....###.###....',
+  ]),
+  definePixelMask([
+    '.........##.....',
+    '......#####.....',
+    '.....#####......',
+    '......##.#......',
+    '......#####.....',
+    '......####......',
+    '.......##.......',
+    '......####......',
+    '.....##.###.....',
+    '.....##.###.....',
+    '.....##.###.....',
+    '.....###.##.....',
+    '......####......',
+    '.......##.......',
+    '.......##.......',
+    '.......###......',
+  ]),
+];
+
 function createTileMap(rows: Readonly<Record<number, string>> = {}): TileMap {
   const tiles = createEmptyTileRows();
 
@@ -71,15 +154,39 @@ describe('MinerWilly', () => {
     expect(willy.y).toBe(START_Y);
   });
 
-  it('keeps the wide-leg frame at the full standing height', () => {
+  it('preserves all four source silhouettes while walking right', () => {
     const tileMap = createTileMap({ [GROUND_ROW]: SOLID_TILE_ROW });
     const willy = new MinerWilly(START_X, START_Y);
+    const actualMasks = [willy.collisionMask];
 
-    willy.update(RIGHT_INPUT, tileMap);
+    for (let phase = 1; phase < EXPECTED_RIGHT_MASKS.length; phase++) {
+      willy.update(RIGHT_INPUT, tileMap);
+      actualMasks.push(willy.collisionMask);
+    }
 
-    expect(willy.collisionMask.height).toBe(MinerWilly.SPRITE_HEIGHT);
-    expect(willy.collisionMask.rows[0]).not.toBe(0);
-    expect(willy.collisionMask.rows[MinerWilly.SPRITE_HEIGHT - 1]).not.toBe(0);
+    expect(actualMasks).toEqual(EXPECTED_RIGHT_MASKS);
+
+    for (const mask of actualMasks) {
+      expect(mask.height).toBe(MinerWilly.SPRITE_HEIGHT);
+      expect(mask.rows[0]).not.toBe(0);
+      expect(mask.rows[MinerWilly.SPRITE_HEIGHT - 1]).not.toBe(0);
+    }
+  });
+
+  it('mirrors every source phase exactly while walking left', () => {
+    const tileMap = createTileMap({ [GROUND_ROW]: SOLID_TILE_ROW });
+    const willy = new MinerWilly(START_X, START_Y);
+    const expectedLeftMasks = [
+      EXPECTED_RIGHT_MASKS[3],
+      EXPECTED_RIGHT_MASKS[2],
+      EXPECTED_RIGHT_MASKS[1],
+      EXPECTED_RIGHT_MASKS[0],
+    ].map(mirrorPixelMask);
+
+    for (const expectedMask of expectedLeftMasks) {
+      willy.update(LEFT_INPUT, tileMap);
+      expect(willy.collisionMask).toEqual(expectedMask);
+    }
   });
 
   it('keeps the launch direction throughout a jump', () => {
