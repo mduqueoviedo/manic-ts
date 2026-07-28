@@ -44,6 +44,7 @@ It is included as external reference material and is not used as a game asset.
 ## Project documentation
 
 * [Development roadmap](./ROADMAP.md)
+* [Deployment workflow](./docs/deployment.md)
 * [Technical specifications](./manic-miner-specs.md)
 
 ## Temporary shortcuts

@@ -125,6 +125,23 @@ Central Cavern's intended route and major obstacles are playable.
 - [ ] Track cavern-specific mechanics without coupling them to Central Cavern.
 - [ ] Validate full-game progression, lives and scoring.
 
+## Delivery and deployment
+
+- [ ] Import the GitHub repository into Vercel with `main` as the production
+  branch and automatic preview deployments for pull requests.
+- [ ] Require the package `test` script as a Vercel Native Deployment Check for
+  preview and production deployments.
+- [ ] Confirm that a successful merge to `main` produces a production
+  deployment only after its required checks pass.
+- [ ] Add a GitHub Actions workflow that runs the automated tests and production
+  build for pull requests.
+- [ ] Protect `main` by making the GitHub Actions result a required status check.
+- [ ] Make the GitHub Actions result a Vercel Deployment Check if production
+  promotion needs to wait for repository CI as well as Vercel's native check.
+
+See the [deployment workflow](./docs/deployment.md) for the intended rollout
+and the responsibilities of each check.
+
 ## Ongoing quality work
 
 - Add focused automated tests with each stateful mechanic.
