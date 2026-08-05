@@ -19,14 +19,16 @@
   remain 7x7 rectangles. One-way and collapsible tiles use visible heights of
   5 and 6 pixels respectively. Conveyors use four CPC-derived directional 8x8
   animation masks. Solid terrain uses the measured red-and-green CPC brick
-  pattern: horizontal blocks have a transparent first scanline and vertically
-  chained wall cells close it with a complete red row.
-* **Collision Geometry:** Willy keeps a provisional 10x16 terrain envelope,
-  aligned four pixels from the left edge of his sprite cell. This preserves
-  the measured clearance between his visible silhouette and raised solid
-  blocks. Static-hazard and level-object overlap uses the occupied pixels of
-  his current 16x16 movement mask. Static-hazard collision adds a one-pixel
-  horizontal guard to the captured silhouette.
+  pattern: horizontal blocks normalize their transparent leading scanline
+  above the collision cell and close their lower edge in red, while vertically
+  chained wall cells close their upper edge with a complete red row.
+* **Collision Geometry:** Willy keeps a provisional 9x16 terrain envelope,
+  aligned four pixels from the left edge of his sprite cell. Removing the
+  always-empty rightmost column lets his visible silhouette meet walls without
+  changing the established left-side alignment. Static-hazard and level-object
+  overlap uses the occupied pixels of his current 16x16 movement mask.
+  Static-hazard collision adds a one-pixel horizontal guard to the captured
+  silhouette.
 
 ## 2. Movement Mechanics (Miner Willy)
 * **Horizontal Speed:** Fixed speed. Willy moves exactly 2 pixels per frame horizontally. No inertia, no acceleration, no deceleration.

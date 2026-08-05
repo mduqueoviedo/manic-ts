@@ -136,7 +136,6 @@ describe('TileMap', () => {
       'GGGGGRGG',
     ]);
     expect(readRenderedBrick(4)).toEqual([
-      '........',
       'GGRGGGRG',
       'RRRRRRRR',
       'GGGGGRGG',
@@ -144,6 +143,7 @@ describe('TileMap', () => {
       'GGRGGGGG',
       'RRRRRRRR',
       'GGGGGRGG',
+      'RRRRRRRR',
     ]);
   });
 

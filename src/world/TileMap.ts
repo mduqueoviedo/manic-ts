@@ -43,10 +43,10 @@ const DEADLY_MASK = definePixelMask([
   '........',
 ]);
 // Central Cavern uses the same brick bond for raised blocks and side walls.
-// Horizontal blocks leave their first scanline transparent, while vertically
-// chained wall cells add a complete red scanline to close the seam.
+// Horizontal blocks normalize the captured leading padding above the cell and
+// close their lower edge in red. Vertically chained wall cells instead close
+// the upper seam in red.
 const HORIZONTAL_BRICK_RED_MASK = definePixelMask([
-  '........',
   '..#...#.',
   '########',
   '.....#..',
@@ -54,6 +54,7 @@ const HORIZONTAL_BRICK_RED_MASK = definePixelMask([
   '..#.....',
   '########',
   '.....#..',
+  '########',
 ]);
 const VERTICAL_BRICK_RED_MASK = definePixelMask([
   '########',
@@ -65,7 +66,17 @@ const VERTICAL_BRICK_RED_MASK = definePixelMask([
   '########',
   '.....#..',
 ]);
-const BRICK_GREEN_MASK = definePixelMask([
+const HORIZONTAL_BRICK_GREEN_MASK = definePixelMask([
+  '##.###.#',
+  '........',
+  '#####.##',
+  '........',
+  '##.#####',
+  '........',
+  '#####.##',
+  '........',
+]);
+const VERTICAL_BRICK_GREEN_MASK = definePixelMask([
   '........',
   '##.###.#',
   '........',
@@ -437,17 +448,26 @@ export class TileMap {
     x: number,
     y: number,
   ): void {
+    const usesVerticalMask = this.usesVerticalBrickMask(column, row);
+
     ctx.fillStyle = BRICK_RED;
     renderPixelMask(
       ctx,
-      this.usesVerticalBrickMask(column, row)
+      usesVerticalMask
         ? VERTICAL_BRICK_RED_MASK
         : HORIZONTAL_BRICK_RED_MASK,
       x,
       y,
     );
     ctx.fillStyle = BRICK_GREEN;
-    renderPixelMask(ctx, BRICK_GREEN_MASK, x, y);
+    renderPixelMask(
+      ctx,
+      usesVerticalMask
+        ? VERTICAL_BRICK_GREEN_MASK
+        : HORIZONTAL_BRICK_GREEN_MASK,
+      x,
+      y,
+    );
   }
 
   private usesVerticalBrickMask(column: number, row: number): boolean {
