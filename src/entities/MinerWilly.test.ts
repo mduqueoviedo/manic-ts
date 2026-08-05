@@ -146,12 +146,12 @@ function createTileMap(rows: Readonly<Record<number, string>> = {}): TileMap {
 }
 
 describe('MinerWilly', () => {
-  it('centers the terrain envelope within the 16-pixel sprite cell', () => {
+  it('aligns the terrain envelope with the visible horizontal body', () => {
     const willy = new MinerWilly(START_X, START_Y);
 
     expect(willy.collisionX).toBe(willy.x + 4);
     expect(willy.collisionY).toBe(willy.y);
-    expect(MinerWilly.COLLISION_WIDTH).toBe(10);
+    expect(MinerWilly.COLLISION_WIDTH).toBe(9);
     expect(MinerWilly.COLLISION_HEIGHT).toBe(16);
   });
 

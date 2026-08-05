@@ -182,7 +182,7 @@ describe('GameSession', () => {
 
       if (approachTicks > 0) {
         expect(session.playerPosition).toEqual({
-          x: TileMap.ORIGIN_X + 146,
+          x: TileMap.ORIGIN_X + 147,
           y: 88,
         });
       }
@@ -194,7 +194,7 @@ describe('GameSession', () => {
 
         if (approachTicks > 0 && tick === 7) {
           expect(session.playerPosition).toEqual({
-            x: TileMap.ORIGIN_X + 154,
+            x: TileMap.ORIGIN_X + 155,
             y: 80,
           });
         }

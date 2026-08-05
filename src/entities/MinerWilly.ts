@@ -24,7 +24,7 @@ export class MinerWilly {
 
     // Terrain remains tile-envelope based while hazards and level objects use
     // the occupied pixels of the current animation frame.
-    public static readonly COLLISION_WIDTH = 10;
+    public static readonly COLLISION_WIDTH = 9;
     public static readonly COLLISION_HEIGHT = MinerWilly.SPRITE_HEIGHT;
     private static readonly COLLISION_OFFSET_X = 4;
     private static readonly DEADLY_MASK_EXPANSION = 1;

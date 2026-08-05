@@ -58,9 +58,11 @@ and `(12, 12)`.
   that it moves left, so the level symbol and tile model now preserve its
   direction explicitly.
 - Solid terrain now uses the measured red-and-green CPC brick bond. Raised
-  horizontal blocks leave their first scanline transparent, while vertically
-  chained side-wall cells add a complete red scanline to close each seam.
-  Their collision geometry remains the full 8x8 solid cell.
+  horizontal blocks normalize their captured transparent leading scanline
+  above the tile, aligning their visible top with Willy's feet and adjacent
+  collapsible floors, and finish with a complete red lower scanline. Vertically
+  chained side-wall cells retain a complete red upper scanline to close each
+  seam. Their collision geometry remains the full 8x8 solid cell.
 - Collapsible tiles now degrade independently over seven accumulated support
   ticks. One uninterrupted walking pass removes them completely, and a life
   restart returns them to their initial state.
@@ -96,7 +98,7 @@ These dimensions describe visible placeholder bounds, not collision masks.
 | Element | Placeholder size |
 | --- | --- |
 | Willy's sprite cell | 16x16 pixels |
-| Willy's terrain collision envelope | 10x16 pixels, offset 4px into the cell |
+| Willy's terrain collision envelope | 9x16 pixels, offset 4px into the cell |
 | Collectible | 7x7 pixels |
 | One-way floor | 8x5 pixels |
 | Collapsible floor | 8x6 pixels |
