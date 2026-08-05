@@ -127,17 +127,17 @@ Central Cavern's intended route and major obstacles are playable.
 
 ## Delivery and deployment
 
-- [ ] Import the GitHub repository into Vercel with `main` as the production
+- [x] Import the GitHub repository into Vercel with `main` as the production
   branch and automatic preview deployments for pull requests.
-- [ ] Require the package `test` script as a Vercel Native Deployment Check for
-  preview and production deployments.
+- [x] Require the package `typecheck` script as a Vercel Native Deployment Check
+  for preview and production deployments.
 - [ ] Confirm that a successful merge to `main` produces a production
   deployment only after its required checks pass.
 - [x] Add a GitHub Actions workflow that runs the automated tests and production
   build for pull requests and pushes to `main`.
-- [ ] Protect `main` by making the GitHub Actions result a required status check.
-- [ ] Make the GitHub Actions result a Vercel Deployment Check if production
-  promotion needs to wait for repository CI as well as Vercel's native check.
+- [x] Protect `main` by making the GitHub Actions result a required status check.
+- [x] Make the GitHub Actions result a Vercel Deployment Check so production
+  promotion waits for repository CI as well as Vercel's native check.
 
 See the [deployment workflow](./docs/deployment.md) for the intended rollout
 and the responsibilities of each check.

@@ -1,13 +1,12 @@
 # Deployment workflow
 
-The project is intended to use Vercel's Git integration for deployments and
-GitHub checks for repository-level quality gates. This document records the
-settings that live outside the repository and keeps the planned rollout
-explicit.
+The project uses Vercel's Git integration for deployments and GitHub checks for
+repository-level quality gates. This document records the settings that live
+outside the repository and keeps the remaining rollout explicit.
 
 ## Initial Vercel setup
 
-Import the GitHub repository from the Vercel dashboard with these settings:
+The GitHub repository is imported into Vercel with these settings:
 
 - Framework preset: Vite
 - Root directory: repository root
@@ -16,13 +15,14 @@ Import the GitHub repository from the Vercel dashboard with these settings:
 - Output directory: `dist`
 - Production branch: `main`
 
-The Git integration should create a preview deployment for each pull request
-and a production deployment for changes merged into `main`.
+The Git integration creates a preview deployment for each pull request and a
+production deployment for changes merged into `main`.
 
-Add a Native Deployment Check that runs the package `test` script. Mark it as
-required for both preview and production so a failed test prevents the
-deployment from being promoted. Keep this as a separate check from the build so
-both results remain visible and can run independently.
+Vercel's Native Deployment Checks support the matching `lint` and `typecheck`
+package scripts. The `Typecheck` check runs `pnpm typecheck` and is required for
+both preview and production, so a type error prevents the deployment alias from
+being assigned. The automated test suite remains in GitHub Actions because it
+is not one of Vercel's native script checks.
 
 ## GitHub CI follow-up
 
@@ -30,19 +30,20 @@ Add a focused GitHub Actions workflow that runs for pull requests and pushes to
 `main`, and verifies:
 
 - `pnpm exec vitest run`
+- `pnpm typecheck`
 - `pnpm build`
 
 The repository workflow is defined in `.github/workflows/ci.yml`. Its required
-check is exposed as `CI / Test and build`; keep that name stable when selecting
-the branch-protection rule for `main` and the Vercel Deployment Check. Running
-the workflow again after a merge associates the result with the exact commit
-that Vercel builds for production, including when the pull request is squash
-merged.
+check is exposed as `Test and build`; keep that name stable in the `main`
+ruleset and when selecting the Vercel Deployment Check. Running the workflow
+again after a merge associates the result with the exact commit that Vercel
+builds for production, including when the pull request is squash merged.
 
-Make its result a required status check for `main`. This blocks a failing change
-before it can be merged, while the Vercel check protects the deployment itself.
-If the same GitHub Actions result is later selected as a Vercel Deployment
-Check, production promotion will also wait for repository CI.
+The `main` ruleset requires pull requests, squash merges, resolved review
+threads and a successful `Test and build` result. This blocks a failing change
+before it can be merged. Vercel also requires that GitHub Actions result as a
+production Deployment Check, so the production alias waits for repository CI
+as well as the native `Typecheck` check.
 
 ## Rollout checks
 
