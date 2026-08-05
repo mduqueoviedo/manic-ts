@@ -26,10 +26,18 @@ both results remain visible and can run independently.
 
 ## GitHub CI follow-up
 
-Add a focused GitHub Actions workflow that runs for pull requests and verifies:
+Add a focused GitHub Actions workflow that runs for pull requests and pushes to
+`main`, and verifies:
 
 - `pnpm exec vitest run`
 - `pnpm build`
+
+The repository workflow is defined in `.github/workflows/ci.yml`. Its required
+check is exposed as `CI / Test and build`; keep that name stable when selecting
+the branch-protection rule for `main` and the Vercel Deployment Check. Running
+the workflow again after a merge associates the result with the exact commit
+that Vercel builds for production, including when the pull request is squash
+merged.
 
 Make its result a required status check for `main`. This blocks a failing change
 before it can be merged, while the Vercel check protects the deployment itself.

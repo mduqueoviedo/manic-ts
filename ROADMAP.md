@@ -133,8 +133,8 @@ Central Cavern's intended route and major obstacles are playable.
   preview and production deployments.
 - [ ] Confirm that a successful merge to `main` produces a production
   deployment only after its required checks pass.
-- [ ] Add a GitHub Actions workflow that runs the automated tests and production
-  build for pull requests.
+- [x] Add a GitHub Actions workflow that runs the automated tests and production
+  build for pull requests and pushes to `main`.
 - [ ] Protect `main` by making the GitHub Actions result a required status check.
 - [ ] Make the GitHub Actions result a Vercel Deployment Check if production
   promotion needs to wait for repository CI as well as Vercel's native check.
