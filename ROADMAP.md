@@ -64,8 +64,10 @@ known inaccuracies are visual rather than structural.
 - [x] Restore all collapsible floors after losing a life.
 - [x] Implement conveyor direction and horizontal movement.
 - [x] Implement conveyor direction locking while Willy remains grounded.
-- [ ] Implement the immediate opposite-jump exception when landing against a
-  conveyor's direction.
+- [x] Preserve opposing movement after landing against a conveyor until input
+  is released or an obstacle hands control back to the belt.
+- [x] Hold Willy stationary after a safe landing on a lower opposing conveyor
+  and allow vertical jumps while the opposing direction remains pressed.
 - [ ] Verify the exact landing input window against the Amstrad CPC version.
 - [ ] Define how conveyors interact with nearby walls and platform edges.
 - [ ] Restore conveyor state as part of a cavern restart if it becomes mutable.
