@@ -10,6 +10,8 @@ import {
 import { TileMap } from '../world/TileMap';
 
 const LAST_PIXEL_OFFSET = 1;
+type HorizontalDirection = 'NONE' | 'LEFT' | 'RIGHT';
+type ConveyorControlMode = 'NONE' | 'WALK' | 'STAND';
 
 export class MinerWilly {
     public x: number;
@@ -155,7 +157,11 @@ export class MinerWilly {
     private isJumping: boolean = false;
     private isFalling: boolean = false;
     private jumpFrame: number = MinerWilly.JUMP_START_FRAME;
-    private jumpDirection: 'NONE' | 'LEFT' | 'RIGHT' = 'NONE';
+    private jumpDirection: HorizontalDirection = 'NONE';
+    private jumpOriginY: number | undefined;
+    private conveyorControlMode: ConveyorControlMode = 'NONE';
+    private conveyorControlDirection: HorizontalDirection = 'NONE';
+    private stationaryConveyorJumpDirection: HorizontalDirection = 'NONE';
     private facing: 'LEFT' | 'RIGHT' = 'RIGHT';
     private animationFrame = 0;
 
@@ -202,18 +208,29 @@ export class MinerWilly {
         this.previousX = this.x;
         this.previousY = this.y;
 
+        if (
+            this.stationaryConveyorJumpDirection !== 'NONE'
+            && !this.isDirectionPressed(
+                input,
+                this.stationaryConveyorJumpDirection,
+            )
+        ) {
+            this.stationaryConveyorJumpDirection = 'NONE';
+        }
+
         if (!this.isJumping && !this.isFalling && !this.hasSupport(tileMap)) {
             this.isFalling = true;
+            this.clearConveyorControl();
         }
 
         if (this.isFalling) {
-            this.handleFreeFall(tileMap);
+            this.handleFreeFall(input, tileMap);
             this.keepWithinCavernBounds();
             return;
         }
 
         if (this.isJumping) {
-            this.handleAirMovement(tileMap);
+            this.handleAirMovement(input, tileMap);
         } else {
             this.handleGroundMovement(input, tileMap);
         }
@@ -234,13 +251,34 @@ export class MinerWilly {
             MinerWilly.COLLISION_WIDTH,
             this.collisionY + MinerWilly.COLLISION_HEIGHT,
         );
+        const hasOpposingControl =
+            this.conveyorControlMode !== 'NONE'
+            && this.isDirectionOppositeToConveyor(
+                this.conveyorControlDirection,
+                conveyorDirection,
+            )
+            && this.isDirectionPressed(input, this.conveyorControlDirection);
+
+        if (!hasOpposingControl) {
+            this.clearConveyorControl();
+        }
 
         if (input.isJumpPressed) {
             this.isJumping = true;
             this.jumpFrame = MinerWilly.JUMP_START_FRAME;
+            this.jumpOriginY = this.y;
 
             // Lock horizontal trajectory instantly at the frame of launch
-            if (conveyorDirection < 0) {
+            if (hasOpposingControl && this.conveyorControlMode === 'WALK') {
+                this.jumpDirection = this.conveyorControlDirection;
+            } else if (
+                hasOpposingControl
+                && this.conveyorControlMode === 'STAND'
+            ) {
+                this.jumpDirection = 'NONE';
+                this.stationaryConveyorJumpDirection =
+                    this.conveyorControlDirection;
+            } else if (conveyorDirection < 0) {
                 this.jumpDirection = 'LEFT';
             } else if (conveyorDirection > 0) {
                 this.jumpDirection = 'RIGHT';
@@ -251,10 +289,27 @@ export class MinerWilly {
             } else {
                 this.jumpDirection = 'NONE';
             }
+            this.clearConveyorControl();
 
             // The launch input is also the first arc frame. Deferring this
             // until the next update creates a visible one-tick pause.
-            this.handleAirMovement(tileMap);
+            this.handleAirMovement(input, tileMap);
+            return;
+        }
+
+        if (hasOpposingControl && this.conveyorControlMode === 'WALK') {
+            const offset = this.conveyorControlDirection === 'LEFT'
+                ? -MinerWilly.HORIZONTAL_SPEED
+                : MinerWilly.HORIZONTAL_SPEED;
+
+            if (!this.moveHorizontally(tileMap, offset)) {
+                this.clearConveyorControl();
+                this.moveWithConveyor(tileMap, conveyorDirection);
+            }
+            return;
+        }
+
+        if (hasOpposingControl && this.conveyorControlMode === 'STAND') {
             return;
         }
 
@@ -272,7 +327,7 @@ export class MinerWilly {
     /**
      * Strict frame-by-frame arc processing for mid-air movement.
      */
-    private handleAirMovement(tileMap: TileMap): void {
+    private handleAirMovement(input: PlayerInput, tileMap: TileMap): void {
         // 1. Apply the vertical arc and resolve head or landing collisions.
         const verticalOffset = MinerWilly.JUMP_OFFSET_TABLE[this.jumpFrame];
 
@@ -293,6 +348,8 @@ export class MinerWilly {
                 this.moveHorizontally(tileMap, MinerWilly.HORIZONTAL_SPEED);
             }
 
+            this.rememberConveyorLanding(input, tileMap, landingDirection);
+
             return;
         }
 
@@ -309,7 +366,6 @@ export class MinerWilly {
         this.jumpFrame++;
         if (this.jumpFrame >= MinerWilly.JUMP_OFFSET_TABLE.length) {
             this.isJumping = false;
-            this.jumpDirection = 'NONE';
         }
     }
 
@@ -373,10 +429,94 @@ export class MinerWilly {
     }
 
     /**
+     * Selects the control retained after landing against a conveyor. A normal
+     * landing preserves opposing travel, while landing below the jump origin
+     * holds Willy still. A vertical jump from that stationary state resumes it.
+     */
+    private rememberConveyorLanding(
+        input: PlayerInput,
+        tileMap: TileMap,
+        landingDirection: HorizontalDirection,
+    ): void {
+        const conveyorDirection = tileMap.getConveyorDirectionBelow(
+            this.collisionX,
+            MinerWilly.COLLISION_WIDTH,
+            this.collisionY + MinerWilly.COLLISION_HEIGHT,
+        );
+        const opposingDirection: HorizontalDirection = conveyorDirection < 0
+            ? 'RIGHT'
+            : conveyorDirection > 0
+                ? 'LEFT'
+                : 'NONE';
+        const isOpposingDirectionPressed = this.isDirectionPressed(
+            input,
+            opposingDirection,
+        );
+        const landedBelowJumpOrigin =
+            this.jumpOriginY !== undefined
+            && this.y > this.jumpOriginY;
+        const resumesStationaryControl =
+            this.stationaryConveyorJumpDirection === opposingDirection;
+
+        this.clearConveyorControl();
+
+        if (
+            isOpposingDirectionPressed
+            && (landedBelowJumpOrigin || resumesStationaryControl)
+        ) {
+            this.conveyorControlMode = 'STAND';
+            this.conveyorControlDirection = opposingDirection;
+        } else if (
+            isOpposingDirectionPressed
+            && landingDirection === opposingDirection
+        ) {
+            this.conveyorControlMode = 'WALK';
+            this.conveyorControlDirection = opposingDirection;
+        }
+
+        this.jumpOriginY = undefined;
+        this.stationaryConveyorJumpDirection = 'NONE';
+    }
+
+    private clearConveyorControl(): void {
+        this.conveyorControlMode = 'NONE';
+        this.conveyorControlDirection = 'NONE';
+    }
+
+    private isDirectionPressed(
+        input: PlayerInput,
+        direction: HorizontalDirection,
+    ): boolean {
+        return direction === 'LEFT'
+            ? input.isLeftPressed
+            : direction === 'RIGHT' && input.isRightPressed;
+    }
+
+    private isDirectionOppositeToConveyor(
+        direction: HorizontalDirection,
+        conveyorDirection: -1 | 0 | 1,
+    ): boolean {
+        return (direction === 'LEFT' && conveyorDirection > 0)
+            || (direction === 'RIGHT' && conveyorDirection < 0);
+    }
+
+    private moveWithConveyor(
+        tileMap: TileMap,
+        conveyorDirection: -1 | 0 | 1,
+    ): void {
+        if (conveyorDirection !== 0) {
+            this.moveHorizontally(
+                tileMap,
+                conveyorDirection * MinerWilly.HORIZONTAL_SPEED,
+            );
+        }
+    }
+
+    /**
      * Applies one horizontal step when Willy's path is clear. A blocked step
      * does not discard the jump direction, so movement can resume later.
      */
-    private moveHorizontally(tileMap: TileMap, offset: number): void {
+    private moveHorizontally(tileMap: TileMap, offset: number): boolean {
         const nextX = this.x + offset;
         const nextCollisionX = nextX + MinerWilly.COLLISION_OFFSET_X;
         const leadingEdgeX = offset < 0
@@ -391,7 +531,7 @@ export class MinerWilly {
                 + (offset < 0 ? -1 : 1)
                 + MinerWilly.RIGHT_MASKS.length
             ) % MinerWilly.RIGHT_MASKS.length;
-            return;
+            return true;
         }
 
         const column = Math.floor(
@@ -404,6 +544,7 @@ export class MinerWilly {
             : tileLeft
                 - MinerWilly.COLLISION_WIDTH
                 - MinerWilly.COLLISION_OFFSET_X;
+        return false;
     }
 
     /**
@@ -447,10 +588,13 @@ export class MinerWilly {
      * Handles vertical downward movement after a jump arc or leaving a ledge.
      * Horizontal input is completely ignored during this state.
      */
-    private handleFreeFall(tileMap: TileMap): void {
+    private handleFreeFall(input: PlayerInput, tileMap: TileMap): void {
         const nextY = this.y + MinerWilly.FALL_SPEED;
+        const landingDirection = this.jumpDirection;
 
-        if (!this.tryLandOnSurface(tileMap, nextY)) {
+        if (this.tryLandOnSurface(tileMap, nextY)) {
+            this.rememberConveyorLanding(input, tileMap, landingDirection);
+        } else {
             this.y = nextY;
         }
     }

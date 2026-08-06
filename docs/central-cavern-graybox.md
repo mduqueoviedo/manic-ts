@@ -88,8 +88,12 @@ and `(12, 12)`.
   2-pixel horizontal step on each of the 18 arc frames. The launch input has
   no preliminary walking step or stationary transition tick, and the landing
   frame is not vertical-only.
-- Route completion cannot be signed off until the conveyor landing exception,
-  the Central Cavern enemy and the remaining route checks are implemented.
+- Landing against a conveyor preserves opposing movement while its direction
+  remains pressed. Releasing the direction or meeting an obstacle hands control
+  back to the belt. A safe landing on a lower conveyor instead holds Willy
+  stationary and permits vertical jumps while the opposing direction remains
+  pressed. Route completion cannot be signed off until the Central Cavern
+  enemy and the remaining route checks are implemented.
 
 ## Placeholder dimensions
 

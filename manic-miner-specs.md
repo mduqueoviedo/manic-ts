@@ -93,15 +93,21 @@
     directional input cannot turn him around, and he cannot start a jump
     against the conveyor.
   * There is a landing exception. If Willy lands on a conveyor from a jump
-    whose locked direction is opposite to the conveyor, he keeps that direction
-    for the landing moment. Jumping again immediately allows him to launch
-    against the conveyor.
-  * If that immediate jump is not taken, the conveyor assumes control and the
-    opportunity is lost. Willy cannot later turn around or jump against it
-    while he remains grounded on the conveyor.
+    whose locked direction is opposite to the conveyor, holding that direction
+    lets him keep walking against the belt. He can also jump in that direction.
+  * Releasing the opposing direction or walking into an obstacle hands control
+    back to the conveyor. The opposing movement cannot be recovered while
+    Willy remains grounded on the belt.
+  * A safe landing on a conveyor below the jump's starting height has a
+    different exception. Holding the direction opposite to the conveyor keeps
+    Willy stationary rather than moving against it. Jumping while continuing
+    to hold that direction produces a vertical jump, and the stationary state
+    resumes after landing for as long as the direction remains held.
+  * Releasing the opposing direction while stationary or during its vertical
+    jump hands control back to the conveyor after landing.
   * The precise input window on the landing tick, including whether the jump
     button may be held before contact, must be confirmed against the Amstrad CPC
-    version during implementation.
+    version during route validation.
 * **Collectibles:** A collectible disappears when Willy's collision body
   overlaps its 8x8 cell.
 * **Exit:** The exit remains locked until every collectible has been collected.

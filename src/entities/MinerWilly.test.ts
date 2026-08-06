@@ -201,6 +201,160 @@ describe('MinerWilly', () => {
     expect(willy.y).toBe(START_Y + JUMP_Y_OFFSETS[1]);
   });
 
+  it('walks against a conveyor while the opposing direction stays pressed', () => {
+    const tileMap = createTileMap({
+      [GROUND_ROW]: `######${'<'.repeat(TileMap.COLUMNS - 6)}`,
+    });
+    const willy = new MinerWilly(START_X, START_Y);
+    const jumpRight: PlayerInput = {
+      ...RIGHT_INPUT,
+      isJumpPressed: true,
+    };
+
+    willy.update(jumpRight, tileMap);
+
+    for (let frame = 1; frame < JUMP_Y_OFFSETS.length; frame++) {
+      willy.update(RIGHT_INPUT, tileMap);
+    }
+
+    const landingX = START_X + JUMP_Y_OFFSETS.length * HORIZONTAL_STEP;
+    expect({ x: willy.x, y: willy.y, grounded: willy.isGrounded }).toEqual({
+      x: landingX,
+      y: START_Y,
+      grounded: true,
+    });
+
+    willy.update(RIGHT_INPUT, tileMap);
+    willy.update(RIGHT_INPUT, tileMap);
+
+    expect(willy.x).toBe(landingX + 2 * HORIZONTAL_STEP);
+
+    willy.update(jumpRight, tileMap);
+    expect(willy.x).toBe(landingX + 3 * HORIZONTAL_STEP);
+    expect(willy.y).toBe(START_Y - FIRST_JUMP_RISE);
+  });
+
+  it('hands control back after opposing conveyor input is released', () => {
+    const tileMap = createTileMap({
+      [GROUND_ROW]: `######${'<'.repeat(TileMap.COLUMNS - 6)}`,
+    });
+    const willy = new MinerWilly(START_X, START_Y);
+    const jumpRight: PlayerInput = {
+      ...RIGHT_INPUT,
+      isJumpPressed: true,
+    };
+
+    willy.update(jumpRight, tileMap);
+    for (let frame = 1; frame < JUMP_Y_OFFSETS.length; frame++) {
+      willy.update(RIGHT_INPUT, tileMap);
+    }
+
+    const landingX = willy.x;
+    willy.update(NO_INPUT, tileMap);
+    expect(willy.x).toBe(landingX - HORIZONTAL_STEP);
+
+    willy.update(jumpRight, tileMap);
+    expect(willy.x).toBe(landingX - 2 * HORIZONTAL_STEP);
+    expect(willy.y).toBe(START_Y - FIRST_JUMP_RISE);
+  });
+
+  it('hands control to the conveyor after opposing travel hits a wall', () => {
+    const wallColumn = 12;
+    const wallRow = `${' '.repeat(wallColumn)}#`.padEnd(TileMap.COLUMNS);
+    const tileMap = createTileMap({
+      2: wallRow,
+      3: wallRow,
+      [GROUND_ROW]: `######${'<'.repeat(TileMap.COLUMNS - 6)}`,
+    });
+    const willy = new MinerWilly(START_X, START_Y);
+    const jumpRight: PlayerInput = {
+      ...RIGHT_INPUT,
+      isJumpPressed: true,
+    };
+
+    willy.update(jumpRight, tileMap);
+    for (let frame = 1; frame < JUMP_Y_OFFSETS.length; frame++) {
+      willy.update(RIGHT_INPUT, tileMap);
+    }
+
+    let previousX = willy.x;
+    let conveyorTookControl = false;
+    for (let tick = 0; tick < 10; tick++) {
+      willy.update(RIGHT_INPUT, tileMap);
+      if (willy.x < previousX) {
+        conveyorTookControl = true;
+        break;
+      }
+      previousX = willy.x;
+    }
+
+    expect(conveyorTookControl).toBe(true);
+    const capturedX = willy.x;
+
+    willy.update(jumpRight, tileMap);
+
+    expect(willy.x).toBe(capturedX - HORIZONTAL_STEP);
+    expect(willy.y).toBe(START_Y - FIRST_JUMP_RISE);
+  });
+
+  it('stands still after landing on a lower opposing conveyor', () => {
+    const lowerConveyorRow = GROUND_ROW + 2;
+    const upperPlatform = `${' '.repeat(START_COLUMN)}##`
+      .padEnd(TileMap.COLUMNS);
+    const tileMap = createTileMap({
+      [GROUND_ROW]: upperPlatform,
+      [lowerConveyorRow]: createSurfaceRow('<'),
+    });
+    const willy = new MinerWilly(START_X, START_Y);
+    const jumpRight: PlayerInput = {
+      ...RIGHT_INPUT,
+      isJumpPressed: true,
+    };
+
+    willy.update(jumpRight, tileMap);
+    for (let frame = 1; frame < JUMP_Y_OFFSETS.length; frame++) {
+      willy.update(RIGHT_INPUT, tileMap);
+    }
+    for (let tick = 0; tick < 8 && !willy.isGrounded; tick++) {
+      willy.update(RIGHT_INPUT, tileMap);
+    }
+
+    const standingX = willy.x;
+    const lowerSurfaceY =
+      lowerConveyorRow * TileMap.TILE_SIZE
+      - MinerWilly.COLLISION_HEIGHT;
+
+    expect({ y: willy.y, grounded: willy.isGrounded }).toEqual({
+      y: lowerSurfaceY,
+      grounded: true,
+    });
+    willy.update(RIGHT_INPUT, tileMap);
+    willy.update(RIGHT_INPUT, tileMap);
+    expect(willy.x).toBe(standingX);
+
+    willy.update(jumpRight, tileMap);
+    expect({ x: willy.x, y: willy.y }).toEqual({
+      x: standingX,
+      y: lowerSurfaceY - FIRST_JUMP_RISE,
+    });
+
+    for (let frame = 1; frame < JUMP_Y_OFFSETS.length; frame++) {
+      willy.update(RIGHT_INPUT, tileMap);
+    }
+
+    expect({ x: willy.x, y: willy.y, grounded: willy.isGrounded }).toEqual({
+      x: standingX,
+      y: lowerSurfaceY,
+      grounded: true,
+    });
+
+    willy.update(RIGHT_INPUT, tileMap);
+    expect(willy.x).toBe(standingX);
+
+    willy.update(NO_INPUT, tileMap);
+    expect(willy.x).toBe(standingX - HORIZONTAL_STEP);
+  });
+
   it('stops conveyor movement at a solid wall', () => {
     const wallRow = `${' '.repeat(WALL_COLUMN)}#`.padEnd(TileMap.COLUMNS);
     const tileMap = createTileMap({
