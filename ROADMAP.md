@@ -45,7 +45,7 @@ should be trustworthy enough to support dynamic terrain and enemies.
 - [ ] Identify unintended shortcuts, unreachable areas and trapping positions.
 - [ ] Refine provisional collision dimensions where they affect traversal.
 - [x] Add route-relevant Willy and static-hazard pixel masks.
-- [ ] Record a short manual route checklist for future regression testing.
+- [x] Record a short manual route checklist for future regression testing.
 - [x] Separate tile-level accuracy from later sprite-mask and pixel-art work.
 
 See the [Central Cavern graybox audit](./docs/central-cavern-graybox.md) for
