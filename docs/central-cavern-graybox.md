@@ -94,6 +94,13 @@ and `(12, 12)`.
   stationary and permits vertical jumps while the opposing direction remains
   pressed. Route completion cannot be signed off until the Central Cavern
   enemy and the remaining route checks are implemented.
+- Seven static route checks now run against the Central Cavern definition,
+  including the lower plant and both side ledges. They verify exact landing
+  positions and reject any static-hazard contact.
+- The conveyor-to-left-ledge transition is currently unreachable with the
+  provisional 9x16 terrain envelope. Willy descends through the ledge height
+  before his footprint can overlap it, so collision geometry needs CPC-specific
+  validation before the complete route can be signed off.
 
 ## Placeholder dimensions
 
@@ -111,10 +118,15 @@ These dimensions describe visible placeholder bounds, not collision masks.
 | Static-hazard mask cell | 8x8 pixels |
 | Exit | 16x16 pixels |
 
+## Route checklist
+
+See the [Central Cavern route checklist](./central-cavern-route-checklist.md)
+for reproducible launch positions, automated coverage and the manual sequence.
+
 ## Remaining validation
 
-- Verify static jumps and landings with the provisional collision body.
-- Record the intended collectible route as mechanics become available.
+- Resolve the conveyor-to-left-ledge route blocker against a CPC reference.
+- Extend route regression through the upper items and back to the exit.
 - Check for unintended shortcuts and trapping positions.
 - Confirm the provisional seven-contact collapsible-floor lifetime frame by
   frame against the Amstrad CPC version.
