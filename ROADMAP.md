@@ -115,6 +115,8 @@ Central Cavern's intended route and major obstacles are playable.
 - [ ] Add the proper title and start flow.
 - [ ] Replace the provisional game-over overlay with the intended screen.
 - [ ] Define restart, pause and focus-loss behavior.
+- [ ] Add unobtrusive or invisible touch zones for movement and jumping so the
+  game remains playable on mobile devices without a keyboard.
 - [ ] Document keyboard controls in the game and README.
 
 ## Milestone 8: Additional caverns
