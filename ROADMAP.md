@@ -41,9 +41,9 @@ should be trustworthy enough to support dynamic terrain and enemies.
 
 - [x] Audit terrain placement against external visual references.
 - [x] Audit Willy's spawn, collectibles, hazards and exit positions.
-- [ ] Verify that every intended route works with the current movement rules.
+- [x] Verify that every intended route works with the current movement rules.
 - [ ] Identify unintended shortcuts, unreachable areas and trapping positions.
-- [ ] Refine provisional collision dimensions where they affect traversal.
+- [x] Refine provisional collision dimensions where they affect traversal.
 - [x] Add route-relevant Willy and static-hazard pixel masks.
 - [x] Record a short manual route checklist for future regression testing.
 - [x] Separate tile-level accuracy from later sprite-mask and pixel-art work.
