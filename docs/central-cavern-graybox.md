@@ -92,8 +92,7 @@ and `(12, 12)`.
   remains pressed. Releasing the direction or meeting an obstacle hands control
   back to the belt. A safe landing on a lower conveyor instead holds Willy
   stationary and permits vertical jumps while the opposing direction remains
-  pressed. Route completion cannot be signed off until the Central Cavern
-  enemy and the remaining route checks are implemented.
+  pressed.
 - Nine static route checks now run against the Central Cavern definition,
   including the lower plant and the two-step route from the conveyor to the
   upper-left platforms. They verify exact landing positions and reject any
@@ -104,6 +103,15 @@ and `(12, 12)`.
   A direct conveyor-to-upper-ledge jump is neither required nor part of the
   intended route, so this transition does not justify changing the provisional
   9x16 terrain collision envelope.
+- A continuous regression now follows the route from the right ledge onto the
+  conveyor, over its plant via the raised blocks and through the lower-left
+  platform to the ledge two rows above. The sequence includes conveyor timing
+  and rejects static-hazard contact on every relevant simulation tick.
+- A complete route regression starts at Willy's spawn, collects all five items
+  with one mutable level state and returns through a deliberately opened upper
+  collapsible section before entering the unlocked exit. It also records the
+  safe return hole: collapsing the right upper section would drop Willy onto
+  the lower plant, while the left section reaches the conveyor safely.
 
 ## Placeholder dimensions
 
@@ -128,11 +136,11 @@ for reproducible launch positions, automated coverage and the manual sequence.
 
 ## Remaining validation
 
-- Extend route regression continuously across the conveyor plant, through the
-  upper items and back to the exit.
 - Check for unintended shortcuts and trapping positions.
 - Confirm the provisional seven-contact collapsible-floor lifetime frame by
   frame against the Amstrad CPC version.
+- Add the Central Cavern enemy to the continuous route regression after its
+  movement and collision behavior are implemented.
 - Extend pixel-mask collision to other sprite interactions when their artwork
   and frame data become available.
 

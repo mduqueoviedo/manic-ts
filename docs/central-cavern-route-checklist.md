@@ -31,6 +31,11 @@ Run these checks with:
 pnpm test --run src/levels/01-central-cavern/route.test.ts
 ```
 
+The same regression suite also covers the complete current route in one life.
+It starts at Willy's spawn, preserves the mutable tile and collectible state,
+collects all five items, crosses both collapsible sections, exercises conveyor
+timing and enters the unlocked exit without touching a static hazard.
+
 ## Manual route
 
 - [x] Jump right from the spawn floor onto the lower one-way platform.
@@ -40,18 +45,19 @@ pnpm test --run src/levels/01-central-cavern/route.test.ts
 - [x] Jump against the right wall to collect its item and land back on the
   ledge.
 - [x] Turn left and jump down onto the left-moving conveyor.
-- [ ] Cross the conveyor and clear its plant.
+- [x] Cross the conveyor and clear its plant.
 - [x] Jump left from the conveyor across the gap to the lower-left platform.
 - [x] Jump vertically from the lower-left platform onto the left ledge.
 - [x] From the left ledge, jump right onto the upper platform.
-- [ ] Collect the three upper items while avoiding the stalactites.
-- [ ] Cross the upper collapsible sections and collect the item between the
+- [x] Collect the three upper items while avoiding the stalactites.
+- [x] Cross the upper collapsible sections and collect the item between the
   plants.
-- [ ] Return along the lower route and enter the exit after it unlocks.
+- [x] Return along the lower route and enter the exit after it unlocks.
 
-Checked steps mean the isolated static transition works. They do not yet prove
-that the complete sequence works in one life: collapsible-floor wear, conveyor
-timing and the future enemy must also be exercised continuously.
+Checked steps are covered by an isolated or continuous route regression. They
+prove that the current enemy-free cavern works in one life with collectible and
+collapsible-floor state preserved. The future enemy will require a separate
+route validation once its movement and collision behavior exist.
 
 ## Corrected left-side route
 
@@ -64,5 +70,7 @@ change.
 
 After landing on the lower-left platform, a separate vertical jump reaches the
 ledge at row 7, columns 1-3. Both transitions now have automated regressions.
-The remaining unchecked conveyor step concerns clearing the plant as part of a
-continuous route, not the width of the gap on its left.
+The continuous regression also covers the preceding conveyor plant and confirms
+that this complete left-side sequence is safe with the current pixel masks.
+On the return journey, Willy opens a hole in the left upper collapsible section;
+using the right section instead would drop him onto the lower plant.
