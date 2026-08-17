@@ -100,6 +100,19 @@ function createHazardGapLevel(): LevelDefinition {
   });
 }
 
+function createFatalFallLevel(): LevelDefinition {
+  const tiles = createEmptyTileRows();
+  tiles[4] = `${' '.repeat(4)}#`.padEnd(EMPTY_TILE_ROW.length);
+  tiles[9] = SOLID_TILE_ROW;
+
+  return createTestLevel({
+    name: 'Fatal fall test',
+    spawn: { x: 4 * TileMap.TILE_SIZE - 4, y: 16 },
+    tiles,
+    objects: [{ type: 'COLLECTIBLE', column: 4, row: 2 }],
+  });
+}
+
 function moveIntoHazard(session: GameSession): void {
   const livesBeforeHazard = session.livesRemaining;
 
@@ -221,6 +234,26 @@ describe('GameSession', () => {
     session.update(NO_INPUT);
 
     expect(session.livesRemaining).toBe(2);
+  });
+
+  it('consumes a life and restores the cavern after a fatal fall', () => {
+    const session = new GameSession(createFatalFallLevel());
+    const spawn = session.playerPosition;
+
+    session.update(RIGHT_INPUT);
+    expect(session.remainingCollectibles).toBe(0);
+
+    for (
+      let tick = 1;
+      tick < 20 && session.livesRemaining === 3;
+      tick++
+    ) {
+      session.update(tick < 4 ? RIGHT_INPUT : NO_INPUT);
+    }
+
+    expect(session.livesRemaining).toBe(2);
+    expect(session.playerPosition).toEqual(spawn);
+    expect(session.remainingCollectibles).toBe(1);
   });
 
   it('stops updating after the final life is lost', () => {

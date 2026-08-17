@@ -14,8 +14,9 @@ mechanics incrementally before creating the levels and polishing the visuals.
 
 Collect every white item in the cavern to unlock the exit, then enter the exit
 to complete the level. Avoid the red hazards: touching one costs a life and
-restarts the cavern. Collapsible platforms disappear as Willy walks over them,
-and conveyors carry him in their indicated direction.
+restarts the cavern. Falling too far also costs a life. Collapsible platforms
+disappear as Willy walks over them, and conveyors carry him in their indicated
+direction.
 
 | Action | Controls |
 | --- | --- |

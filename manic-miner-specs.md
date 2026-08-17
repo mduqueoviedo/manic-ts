@@ -58,7 +58,14 @@
   * **Side Wall:** A side collision suppresses only that tick's horizontal
     step. The vertical arc and locked jump direction continue, allowing Willy
     to resume horizontal movement if he rises above or falls below the wall.
-* **Fall Damage:** Falling from a height greater than 4 tiles (32 pixels) results in instant death.
+* **Fall Damage:** Fall safety follows the original airborne-counter behavior
+  [documented by the Manic Miner community][movement-explanation]. Walking off
+  a ledge starts with an empty distance budget: landing after 40 pixels is
+  fatal, while the last tile-aligned safe landing is 32 pixels below the
+  starting surface. If Willy exhausts his jump arc or hits a ceiling before
+  landing, the fall counter is already equivalent to 16 pixels; landing after
+  another 24 pixels is fatal. The life is consumed on landing rather than while
+  Willy is still airborne.
 
 ## 4. Collision Rules
 * **Tile-Based:** Collisions are evaluated against the 8x8 grid.
@@ -150,3 +157,4 @@
   the display refresh rate.
 
 [zx-spectrum-tas]: https://tasvideos.org/7913S
+[movement-explanation]: https://jswmm.co.uk/topic/890-mm-movement-and-collision-detection-explanation/
