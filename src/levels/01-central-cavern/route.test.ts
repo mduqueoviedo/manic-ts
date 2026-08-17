@@ -27,6 +27,18 @@ const JUMP_LEFT_INPUT: PlayerInput = {
   isJumpPressed: true,
 };
 
+const JUMP_INPUT: PlayerInput = {
+  isLeftPressed: false,
+  isRightPressed: false,
+  isJumpPressed: true,
+};
+
+const NO_INPUT: PlayerInput = {
+  isLeftPressed: false,
+  isRightPressed: false,
+  isJumpPressed: false,
+};
+
 const COMPLETE_JUMP_TICKS = 18;
 
 function cavernX(relativeX: number): number {
@@ -102,6 +114,20 @@ describe('Central Cavern static route', () => {
       landing: { x: 188, y: 56 },
       launchInput: JUMP_LEFT_INPUT,
       heldInput: LEFT_INPUT,
+    },
+    {
+      transition: 'from the conveyor to the lower-left platform',
+      start: { x: 64, y: 56 },
+      landing: { x: 28, y: 56 },
+      launchInput: JUMP_LEFT_INPUT,
+      heldInput: LEFT_INPUT,
+    },
+    {
+      transition: 'from the lower-left platform to the left ledge',
+      start: { x: 16, y: 56 },
+      landing: { x: 16, y: 40 },
+      launchInput: JUMP_INPUT,
+      heldInput: NO_INPUT,
     },
     {
       transition: 'from the left ledge to the upper platform',

@@ -21,6 +21,8 @@ definition and fails if Willy touches a static hazard:
 | Collapsible floor to right ledge | `(200, 80)` | Right | `(224, 64)` |
 | Right ledge to right-wall item | `(224, 64)` | Right | `(235, 64)` |
 | Right ledge to conveyor | `(220, 64)` | Left | `(188, 56)` |
+| Conveyor to lower-left platform | `(64, 56)` | Left | `(28, 56)` |
+| Lower-left platform to left ledge | `(16, 56)` | Vertical | `(16, 40)` |
 | Left ledge to upper platform | `(8, 40)` | Right | `(32, 24)` |
 
 Run these checks with:
@@ -38,7 +40,9 @@ pnpm test --run src/levels/01-central-cavern/route.test.ts
 - [x] Jump against the right wall to collect its item and land back on the
   ledge.
 - [x] Turn left and jump down onto the left-moving conveyor.
-- [ ] Cross the conveyor, clearing its plant, and reach the left ledge.
+- [ ] Cross the conveyor and clear its plant.
+- [x] Jump left from the conveyor across the gap to the lower-left platform.
+- [x] Jump vertically from the lower-left platform onto the left ledge.
 - [x] From the left ledge, jump right onto the upper platform.
 - [ ] Collect the three upper items while avoiding the stalactites.
 - [ ] Cross the upper collapsible sections and collect the item between the
@@ -49,15 +53,16 @@ Checked steps mean the isolated static transition works. They do not yet prove
 that the complete sequence works in one life: collapsible-floor wear, conveyor
 timing and the future enemy must also be exercised continuously.
 
-## Current route blocker
+## Corrected left-side route
 
-The jump from the conveyor's left edge to the ledge at row 7, columns 1-3 is
-not reachable with the provisional 9x16 terrain collision envelope. Willy must
-land 16 pixels above the conveyor, so only the first 12 jump frames contribute
-horizontal travel before his feet descend through the ledge height. The
-current footprint remains outside the ledge at that point.
+The intended route does not require a direct jump from the conveyor to the
+ledge at row 7. The lower-left platform at row 9, columns 1-4 is the intermediate
+landing surface. Only columns 5-7 are empty between that platform and the
+conveyor beginning at column 8, so the gap is 24 pixels. Willy's complete
+horizontal jump travels 36 pixels and clears it without any collision-envelope
+change.
 
-Resolve this before signing off the full route. The follow-up should compare
-the CPC collision footprint and launch position, then adjust collision geometry
-or movement only when supported by that reference. The already automated
-transitions should remain green after the change.
+After landing on the lower-left platform, a separate vertical jump reaches the
+ledge at row 7, columns 1-3. Both transitions now have automated regressions.
+The remaining unchecked conveyor step concerns clearing the plant as part of a
+continuous route, not the width of the gap on its left.

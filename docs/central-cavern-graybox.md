@@ -94,13 +94,16 @@ and `(12, 12)`.
   stationary and permits vertical jumps while the opposing direction remains
   pressed. Route completion cannot be signed off until the Central Cavern
   enemy and the remaining route checks are implemented.
-- Seven static route checks now run against the Central Cavern definition,
-  including the lower plant and both side ledges. They verify exact landing
-  positions and reject any static-hazard contact.
-- The conveyor-to-left-ledge transition is currently unreachable with the
-  provisional 9x16 terrain envelope. Willy descends through the ledge height
-  before his footprint can overlap it, so collision geometry needs CPC-specific
-  validation before the complete route can be signed off.
+- Nine static route checks now run against the Central Cavern definition,
+  including the lower plant and the two-step route from the conveyor to the
+  upper-left platforms. They verify exact landing positions and reject any
+  static-hazard contact.
+- The left side of the conveyor is separated from the lower-left platform by
+  three empty cells, a 24-pixel gap that Willy's 36-pixel horizontal jump can
+  clear. From there, a separate vertical jump reaches the ledge two rows above.
+  A direct conveyor-to-upper-ledge jump is neither required nor part of the
+  intended route, so this transition does not justify changing the provisional
+  9x16 terrain collision envelope.
 
 ## Placeholder dimensions
 
@@ -125,8 +128,8 @@ for reproducible launch positions, automated coverage and the manual sequence.
 
 ## Remaining validation
 
-- Resolve the conveyor-to-left-ledge route blocker against a CPC reference.
-- Extend route regression through the upper items and back to the exit.
+- Extend route regression continuously across the conveyor plant, through the
+  upper items and back to the exit.
 - Check for unintended shortcuts and trapping positions.
 - Confirm the provisional seven-contact collapsible-floor lifetime frame by
   frame against the Amstrad CPC version.
