@@ -25,6 +25,11 @@ direction.
 | Jump | `Space` or `Up Arrow` |
 | Restart the game | `1` |
 
+On touch screens, the canvas uses invisible controls: its leftmost quarter
+moves left, the next quarter moves right, and its right half jumps. Multiple
+touches allow moving and jumping together. After `GAME OVER`, tap anywhere on
+the canvas to restart.
+
 Willy cannot change direction during a jump. Walking off a ledge also produces
 a vertical fall, so line up each jump before leaving the platform.
 

@@ -45,7 +45,7 @@ const TICK_TIME = MILLISECONDS_PER_SECOND / LOGIC_TICK_RATE;
 let lastTime = 0;
 let accumulatedTime = 0;
 
-const input = new InputHandler();
+const input = new InputHandler(window, canvas);
 const gameSession = new GameSession(LEVELS[0]);
 
 canvas.width = CANVAS_WIDTH;
@@ -57,7 +57,7 @@ window.addEventListener('resize', resizeCanvasDisplay);
  * Updates the game simulation.
  */
 function update(): void {
-  if (input.consumeRestartRequest()) {
+  if (input.consumeRestartRequest(gameSession.isGameOver)) {
     gameSession.restartGame();
     return;
   }
