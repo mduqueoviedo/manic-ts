@@ -145,6 +145,22 @@ function createTileMap(rows: Readonly<Record<number, string>> = {}): TileMap {
   return new TileMap(createTestLevel({ name: 'Movement test', tiles }));
 }
 
+function fallUntilLanding(willy: MinerWilly, tileMap: TileMap): number {
+  let ticks = 0;
+
+  while (!willy.isGrounded && ticks < 30) {
+    willy.update(NO_INPUT, tileMap);
+    ticks++;
+
+    if (!willy.isGrounded) {
+      expect(willy.didLandFromFatalFall).toBe(false);
+    }
+  }
+
+  expect(willy.isGrounded).toBe(true);
+  return ticks;
+}
+
 describe('MinerWilly', () => {
   it('aligns the terrain envelope with the visible horizontal body', () => {
     const willy = new MinerWilly(START_X, START_Y);
@@ -502,6 +518,66 @@ describe('MinerWilly', () => {
     expect(willy.x).toBe(fallX);
     expect(willy.y).toBe(START_Y + 2 * 4);
   });
+
+  it.each([
+    { landingRow: 8, distance: 32, fatal: false },
+    { landingRow: 9, distance: 40, fatal: true },
+  ])(
+    'marks a $distance-pixel ledge fall as fatal: $fatal',
+    ({ landingRow, distance, fatal }) => {
+      const ledgeRow = createSurfaceRow(
+        '#',
+        START_COLUMN,
+        START_COLUMN,
+      );
+      const tileMap = createTileMap({
+        [GROUND_ROW]: ledgeRow,
+        [landingRow]: SOLID_TILE_ROW,
+      });
+      const ledgeX =
+        TileMap.ORIGIN_X
+        + START_COLUMN * TileMap.TILE_SIZE
+        - 4;
+      const willy = new MinerWilly(ledgeX, START_Y);
+
+      for (let tick = 0; tick < 4; tick++) {
+        willy.update(RIGHT_INPUT, tileMap);
+      }
+      fallUntilLanding(willy, tileMap);
+
+      expect(willy.y).toBe(START_Y + distance);
+      expect(willy.didLandFromFatalFall).toBe(fatal);
+    },
+  );
+
+  it.each([
+    { landingRow: 6, extraDistance: 16, fatal: false },
+    { landingRow: 7, extraDistance: 24, fatal: true },
+  ])(
+    'marks a $extraDistance-pixel fall after a jump as fatal: $fatal',
+    ({ landingRow, extraDistance, fatal }) => {
+      const ledgeRow = createSurfaceRow(
+        '#',
+        START_COLUMN,
+        START_COLUMN,
+      );
+      const tileMap = createTileMap({
+        [GROUND_ROW]: ledgeRow,
+        [landingRow]: SOLID_TILE_ROW,
+      });
+      const willy = new MinerWilly(START_X, START_Y);
+      const jumpRight: PlayerInput = {
+        ...RIGHT_INPUT,
+        isJumpPressed: true,
+      };
+
+      willy.update(jumpRight, tileMap);
+      fallUntilLanding(willy, tileMap);
+
+      expect(willy.y).toBe(START_Y + extraDistance);
+      expect(willy.didLandFromFatalFall).toBe(fatal);
+    },
+  );
 
   it('stops at a solid wall instead of entering it', () => {
     const wallRow = `${' '.repeat(WALL_COLUMN)}#`.padEnd(TileMap.COLUMNS);

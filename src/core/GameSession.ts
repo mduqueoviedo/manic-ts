@@ -84,7 +84,8 @@ export class GameSession {
     }
 
     if (
-      this.tileMap.overlapsDeadlyTile(
+      this.willy.didLandFromFatalFall
+      || this.tileMap.overlapsDeadlyTile(
         this.willy.x,
         this.willy.y,
         this.willy.deadlyCollisionMask,

@@ -74,12 +74,12 @@ known inaccuracies are visual rather than structural.
 
 ## Milestone 3: Remaining death and pressure systems
 
-- [ ] Define and implement the special fall-distance death rule.
+- [x] Define and implement the special fall-distance death rule.
 - [ ] Add an air supply that advances on simulation ticks.
 - [ ] Lose a life when the air supply reaches zero.
 - [ ] Restore the full air supply after losing a life.
 - [ ] Expand the placeholder HUD with air, cavern name and score information.
-- [ ] Decide whether a short death transition is needed before restarting.
+- [ ] Add the brief white-screen flash death animation before restarting.
 
 The duration and scoring behavior of the air supply should be tuned only after
 Central Cavern's intended route and major obstacles are playable.

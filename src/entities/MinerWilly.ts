@@ -34,6 +34,11 @@ export class MinerWilly {
     // Movement parameters shared by every state that can move Willy.
     private static readonly HORIZONTAL_SPEED = 2;
     private static readonly FALL_SPEED = 4;
+    // A normal ledge fall starts with an empty distance budget and becomes
+    // fatal on its tenth four-pixel step. Exhausting or interrupting a jump
+    // starts at the original counter's equivalent of four completed steps.
+    private static readonly FATAL_FALL_DISTANCE = 40;
+    private static readonly POST_JUMP_FALL_DISTANCE = 16;
     private static readonly JUMP_START_FRAME = 0;
     // The source sheet bakes a two-pixel horizontal advance into each phase.
     // These masks cancel that offset because world movement already advances
@@ -156,6 +161,8 @@ export class MinerWilly {
     // Jump tracking variables
     private isJumping: boolean = false;
     private isFalling: boolean = false;
+    private fallDistance: number = 0;
+    private landedFromFatalFall = false;
     private jumpFrame: number = MinerWilly.JUMP_START_FRAME;
     private jumpDirection: HorizontalDirection = 'NONE';
     private jumpOriginY: number | undefined;
@@ -184,6 +191,10 @@ export class MinerWilly {
         return !this.isJumping && !this.isFalling;
     }
 
+    public get didLandFromFatalFall(): boolean {
+        return this.landedFromFatalFall;
+    }
+
     // Constant lookup array for vertical movement per frame during a jump.
     // It preserves an 18-frame, 20-pixel arc without pausing at the apex.
     private static readonly JUMP_OFFSET_TABLE: readonly number[] = [
@@ -207,6 +218,7 @@ export class MinerWilly {
     public update(input: PlayerInput, tileMap: TileMap): void {
         this.previousX = this.x;
         this.previousY = this.y;
+        this.landedFromFatalFall = false;
 
         if (
             this.stationaryConveyorJumpDirection !== 'NONE'
@@ -220,6 +232,7 @@ export class MinerWilly {
 
         if (!this.isJumping && !this.isFalling && !this.hasSupport(tileMap)) {
             this.isFalling = true;
+            this.fallDistance = 0;
             this.clearConveyorControl();
         }
 
@@ -267,6 +280,7 @@ export class MinerWilly {
             this.isJumping = true;
             this.jumpFrame = MinerWilly.JUMP_START_FRAME;
             this.jumpOriginY = this.y;
+            this.fallDistance = 0;
 
             // Lock horizontal trajectory instantly at the frame of launch
             if (hasOpposingControl && this.conveyorControlMode === 'WALK') {
@@ -334,6 +348,7 @@ export class MinerWilly {
         if (verticalOffset < 0 && this.resolveCeilingCollision(tileMap, this.y + verticalOffset)) {
             this.isJumping = false;
             this.isFalling = true;
+            this.fallDistance = MinerWilly.POST_JUMP_FALL_DISTANCE;
             this.jumpFrame = MinerWilly.JUMP_START_FRAME;
             this.jumpDirection = 'NONE';
             return;
@@ -366,6 +381,7 @@ export class MinerWilly {
         this.jumpFrame++;
         if (this.jumpFrame >= MinerWilly.JUMP_OFFSET_TABLE.length) {
             this.isJumping = false;
+            this.fallDistance = MinerWilly.POST_JUMP_FALL_DISTANCE;
         }
     }
 
@@ -590,12 +606,17 @@ export class MinerWilly {
      */
     private handleFreeFall(input: PlayerInput, tileMap: TileMap): void {
         const nextY = this.y + MinerWilly.FALL_SPEED;
+        const nextFallDistance = this.fallDistance + MinerWilly.FALL_SPEED;
         const landingDirection = this.jumpDirection;
 
         if (this.tryLandOnSurface(tileMap, nextY)) {
+            this.landedFromFatalFall =
+                nextFallDistance >= MinerWilly.FATAL_FALL_DISTANCE;
+            this.fallDistance = 0;
             this.rememberConveyorLanding(input, tileMap, landingDirection);
         } else {
             this.y = nextY;
+            this.fallDistance = nextFallDistance;
         }
     }
 
